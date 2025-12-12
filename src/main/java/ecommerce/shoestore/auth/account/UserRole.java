@@ -1,5 +1,6 @@
 package ecommerce.shoestore.auth.account;
 
-public class UserRole {
-    
+public enum UserRole {
+    CUSTOMER,
+    ADMIN
 }

@@ -1,17 +1,32 @@
 package ecommerce.shoestore.cartitem;
-//import ecommerce.shoestore.shoes.Shoes;
 
+import ecommerce.shoestore.cart.Cart;
+import ecommerce.shoestore.shoes.Shoes;
+import jakarta.persistence.*;
+
+@Entity
 public class CartItem {
 
-    private long id;
-    //private Shoes item;
+
+    @Id 
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "cartId")
+    private Cart cart;
+
+    @ManyToOne
+    @JoinColumn(name = "shoeId")
+    private Shoes item;
+
     private int quantity;
     private String description;
 
     //CONSTRUCTORS
-    public CartItem(long id, /*Shoes item,*/ int quantity, String description) {
-        this.id = id;
-        //this.item = item;
+    public CartItem(Cart cart, Shoes item, int quantity, String description) {
+        this.cart = cart;
+        this.item = item;
         this.quantity = quantity;
         this.description = description;
     }
@@ -19,11 +34,13 @@ public class CartItem {
     public CartItem() {}
 
     //GETTERS AND SETTERS
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
+    public Long getId() { return id; }
 
-    //public Shoes getItem() { return item; }
-    //public void setItem(Shoes item) { this.item = item; }
+    public Cart getCart() { return cart; }
+    public void setCart(Cart cart) { this.cart = cart; }
+
+    public Shoes getItem() { return item; }
+    public void setItem(Shoes item) { this.item = item; }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
