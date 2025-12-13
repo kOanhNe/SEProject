@@ -97,7 +97,7 @@ public class AuthController {
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
                     user.getEmail(), 
                     null,            
-                    AuthorityUtils.createAuthorityList("ROLE_USER") 
+                    AuthorityUtils.createAuthorityList("ROLE_" + user.getAccount().getRole().name()) // Quyền
             );
             SecurityContextHolder.getContext().setAuthentication(token);
             // -------------------------------------------------------------

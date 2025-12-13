@@ -35,7 +35,7 @@
             </ul>
         </div>
 
-        <div class="d-flex gap-3" align-items-center>
+        <div class="d-flex gap-3 align-items-center">
             <div class="nav-icon"><i class="fas fa-search"></i></div>
             <div class="nav-icon position-relative">
                 <i class="fas fa-shopping-bag"></i>
@@ -56,7 +56,7 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
                     <li><h6 class="dropdown-header">Tài khoản</h6></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Hồ sơ</a></li>
+                    <li><a class="dropdown-item" th:href="@{/user/profile}"><i class="fas fa-user me-2"></i>Hồ sơ</a></li>
                     
                     <!-- Hiện menu Admin nếu có quyền -->
                     <li th:if="${role != null && role.toString() == 'ADMIN'}">
