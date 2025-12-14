@@ -93,6 +93,8 @@ public class AuthController {
             session.setAttribute("USER_ID", user.getUserId());
             session.setAttribute("FULLNAME", user.getFullname());
             session.setAttribute("ROLE", user.getAccount().getRole());
+
+            session.setAttribute("AVATAR", user.getAvatar());
             
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
                     user.getEmail(), 
