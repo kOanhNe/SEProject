@@ -1,21 +1,7 @@
 package ecommerce.shoestore.auth;
 
-import ecommerce.shoestore.auth.dto.*;
-import ecommerce.shoestore.auth.user.User;
-import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid; 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult; 
-import org.springframework.web.bind.annotation.*;
-
-@Controller
-@RequestMapping("/auth")
 public class AuthController {
+<<<<<<< HEAD
 
     @Autowired
     private AuthService authService;
@@ -185,3 +171,4 @@ public class AuthController {
         return "redirect:/auth/login?logout";
     }
 }
+
