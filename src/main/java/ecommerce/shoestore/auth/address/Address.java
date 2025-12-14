@@ -13,7 +13,5 @@ public class Address {
     private String province;
     private String district;
     private String commune;
-    
-    @Column(columnDefinition = "TEXT")
     private String streetDetail;
 }

@@ -56,7 +56,7 @@ public class UserController {
         model.addAttribute("role", session.getAttribute("ROLE"));
         
         model.addAttribute("profile", profileDto);
-        return "user/profile"; // Trả về templates/user/profile.html
+        return "user/profile"; 
     }
 
     // Xử lý cập nhật

@@ -33,8 +33,8 @@ public class User {
     @Column(columnDefinition = "TEXT", nullable = true)
     private String avatar;
 
-    @Column(name = "created_at", updatable = false) 
-    private LocalDateTime createdAt;
+    @Column(name = "registration_date", updatable = false) 
+    private LocalDateTime registrationDate;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "account_id", referencedColumnName = "accountId")
@@ -46,6 +46,6 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        this.registrationDate = LocalDateTime.now();
     }
 }
