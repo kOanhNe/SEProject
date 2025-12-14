@@ -21,28 +21,39 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+            // ❌ Tắt CSRF cho dễ làm đồ án
             .csrf(csrf -> csrf.disable())
 
+            // ===== PHÂN QUYỀN =====
             .authorizeHttpRequests(auth -> auth
-                // PUBLIC
+
+                // ===== PUBLIC =====
                 .requestMatchers(
                     "/", "/index",
                     "/auth/**",
                     "/css/**", "/js/**", "/images/**",
                     "/error",
-                    "/product/**"
+                    "/product/**",
+                    "/user/**"
                 ).permitAll()
 
-                // ADMIN ONLY
+                // ===== ADMIN ONLY (🔥 DÒNG QUAN TRỌNG) =====
                 .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                // USER LOGIN REQUIRED
+                // ===== CÒN LẠI: CHỈ CẦN LOGIN =====
                 .anyRequest().authenticated()
             )
 
-            // ❌ KHÔNG dùng formLogin vì login xử lý bằng Controller
-            .formLogin(form -> form.disable())
+            // ===== FORM LOGIN (GIỮ NGUYÊN CODE BẠN BẠN) =====
+            .formLogin(form -> form
+                .loginPage("/auth/login")
+                .loginProcessingUrl("/j_spring_security_check")
+                .defaultSuccessUrl("/")
+                .failureUrl("/auth/login?error=true")
+                .permitAll()
+            )
 
+            // ===== LOGOUT =====
             .logout(logout -> logout
                 .logoutUrl("/auth/logout")
                 .logoutSuccessUrl("/auth/login?logout")

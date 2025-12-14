@@ -4,10 +4,13 @@ import ecommerce.shoestore.auth.dto.*;
 import ecommerce.shoestore.auth.user.User;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -105,13 +108,13 @@ public class AuthController {
         try {
             User user = authService.login(request);
 
-            // ===== SESSION (CHO VIEW) =====
+            // ===== SESSION (GIỮ NGUYÊN CODE CŨ) =====
             session.setAttribute("USER_ID", user.getUserId());
             session.setAttribute("FULLNAME", user.getFullname());
             session.setAttribute("ROLE", user.getAccount().getRole());
             session.setAttribute("AVATAR", user.getAvatar());
 
-            // ===== SPRING SECURITY AUTH =====
+            // ===== SPRING SECURITY AUTH (THÊM) =====
             UsernamePasswordAuthenticationToken token =
                     new UsernamePasswordAuthenticationToken(
                             user.getEmail(),
@@ -120,9 +123,18 @@ public class AuthController {
                                     "ROLE_" + user.getAccount().getRole().name()
                             )
                     );
-            SecurityContextHolder.getContext().setAuthentication(token);
 
-            // ===== REDIRECT THEO ROLE =====
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(token);
+            SecurityContextHolder.setContext(context);
+
+            // 🔥 CỰC QUAN TRỌNG – LƯU VÀO SESSION
+            session.setAttribute(
+                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                    context
+            );
+
+            // ===== REDIRECT ADMIN (THÊM) =====
             if (user.getAccount().getRole().name().equals("ADMIN")) {
                 return "redirect:/admin";
             }
