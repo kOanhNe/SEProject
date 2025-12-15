@@ -8,12 +8,11 @@ import lombok.*;
 @Data @NoArgsConstructor @AllArgsConstructor
 public class Address {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "\"addressId\"")
     private Long addressId;
     
     private String province;
     private String district;
     private String commune;
-    
-    @Column(columnDefinition = "TEXT")
     private String streetDetail;
 }
