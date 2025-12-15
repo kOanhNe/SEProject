@@ -3,48 +3,42 @@ package ecommerce.shoestore.cartitem;
 import ecommerce.shoestore.cart.Cart;
 import ecommerce.shoestore.shoes.Shoes;
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
+@Table(name = "cartitem")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CartItem {
 
-
-    @Id 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "cartId")
+    @JoinColumn(name = "cartId", nullable = false)
     private Cart cart;
 
     @ManyToOne
-    @JoinColumn(name = "shoeId")
-    private Shoes item;
+    @JoinColumn(name = "shoeId", nullable = false)
+    private Shoes shoes;
 
     private int quantity;
+
     private String description;
 
-    //CONSTRUCTORS
-    public CartItem(Cart cart, Shoes item, int quantity, String description) {
+    protected CartItem(Cart cart, Shoes shoes, int quantity) {
         this.cart = cart;
-        this.item = item;
+        this.shoes = shoes;
         this.quantity = quantity;
-        this.description = description;
     }
 
-    public CartItem() {}
+    public static CartItem create(Cart cart, Shoes shoes, int quantity) {
+        return new CartItem(cart, shoes, quantity);
+    }
 
-    //GETTERS AND SETTERS
-    public Long getId() { return id; }
-
-    public Cart getCart() { return cart; }
-    public void setCart(Cart cart) { this.cart = cart; }
-
-    public Shoes getItem() { return item; }
-    public void setItem(Shoes item) { this.item = item; }
-
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void increaseQuantity(int amount) {
+        this.quantity += amount;
+    }
 }
