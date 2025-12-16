@@ -1,67 +1,106 @@
 package ecommerce.shoestore.auth.user;
 
+import ecommerce.shoestore.auth.account.Account;
+import ecommerce.shoestore.auth.account.AccountRepository;
 import ecommerce.shoestore.auth.address.Address;
-import ecommerce.shoestore.auth.dto.UserProfileDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import ecommerce.shoestore.auth.user.dto.UpdateProfileRequest;
+import ecommerce.shoestore.auth.user.dto.ChangePasswordRequest;
+import ecommerce.shoestore.auth.image.FileUploadService;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
+    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final FileUploadService fileUploadService;
 
-    @Autowired
-    private UserRepository userRepository;
+    public User getCurrentUser(String Email) {
+        return userRepository.findByEmail(Email).orElseThrow(() -> new RuntimeException("User không tồn tại: " + Email));
+    }
 
-    // 1. Lấy thông tin hiển thị lên Form
-    public UserProfileDto getUserProfile(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy User"));
+    public Account getCurrentAccount(String Username) {
+        return accountRepository.findByUsername(Username).orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại: " + Username));
+    }
 
-        UserProfileDto dto = new UserProfileDto();
-        dto.setFullname(user.getFullname());
+    public UpdateProfileRequest getProfileForDisplay(String email) {
+        User user = getCurrentUser(email);
+
+        // Tái sử dụng UpdateProfileRequest làm DTO trả về
+        UpdateProfileRequest dto = new UpdateProfileRequest();
+
+        // Map thông tin cơ bản
         dto.setEmail(user.getEmail());
+        dto.setFullname(user.getFullname());
         dto.setPhone(user.getPhone());
         dto.setDateOfBirth(user.getDateOfBirth());
         dto.setGender(user.getGender());
-        dto.setAvatar(user.getAvatar());
+        dto.setAvatar(user.getAvatar()); // Đây là String đường dẫn ảnh
 
-        // Map địa chỉ (nếu có)
+        // Map địa chỉ (nếu có) - ĐÂY LÀ ĐOẠN BẠN CẦN
         if (user.getAddress() != null) {
             dto.setProvince(user.getAddress().getProvince());
             dto.setDistrict(user.getAddress().getDistrict());
             dto.setCommune(user.getAddress().getCommune());
             dto.setStreetDetail(user.getAddress().getStreetDetail());
+        } else {
+            dto.setProvince("");
+            dto.setDistrict("");
+            dto.setCommune("");
+            dto.setStreetDetail("");
         }
         return dto;
     }
 
-    // 2. Cập nhật thông tin
     @Transactional
-    public void updateUserProfile(Long userId, UserProfileDto req) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User không tồn tại"));
+    public void updateProfile(String email, UpdateProfileRequest request) throws IOException {
+        User user = getCurrentUser(email);
 
-        // Cập nhật thông tin cơ bản (KHÔNG cập nhật Email)
-        user.setFullname(req.getFullname());
-        user.setPhone(req.getPhone());
-        user.setDateOfBirth(req.getDateOfBirth());
-        user.setGender(req.getGender());
+        // Update thông tin cơ bản
+        user.setFullname(request.getFullname());
+        user.setPhone(request.getPhone());
+        user.setGender(request.getGender());
+        user.setDateOfBirth(request.getDateOfBirth());
 
-        if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
-            user.setAvatar(req.getAvatar());
+        // Update địa chỉ
+        if (user.getAddress() == null) {
+            user.setAddress(new Address());
         }
-        
-        // Cập nhật địa chỉ
         Address address = user.getAddress();
-        if (address == null) {
-            address = new Address(); // Nếu chưa có thì tạo mới
-            user.setAddress(address);
+        address.setProvince(request.getProvince());
+        address.setDistrict(request.getDistrict());
+        address.setCommune(request.getCommune());
+        address.setStreetDetail(request.getStreetDetail());
+
+        // Update Avatar
+        if (request.getAvatarFile() != null && !request.getAvatarFile().isEmpty()) {
+            String avatarUrl = fileUploadService.uploadFile(request.getAvatarFile());
+
+            user.setAvatar(avatarUrl);
         }
-        address.setProvince(req.getProvince());
-        address.setDistrict(req.getDistrict());
-        address.setCommune(req.getCommune());
-        address.setStreetDetail(req.getStreetDetail());
 
         userRepository.save(user);
     }
+
+    public void changePassword(String Username, ChangePasswordRequest request) {
+        Account account = getCurrentAccount(Username);
+
+        if (!passwordEncoder.matches(request.getOldPassword(), account.getPassword())) {
+            throw new RuntimeException("Mật khẩu hiện tại không chính xác!");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("Mật khẩu xác nhận không khớp!");
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
+    }
 }
+

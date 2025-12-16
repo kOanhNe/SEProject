@@ -1,0 +1,56 @@
+/* src/main/resources/static/css/profile.css */
+
+/* 1. Style cho các ô input khi bị vô hiệu hóa (Disabled) */
+.profile-input:disabled {
+    background-color: #f8f9fa; /* Màu xám nhạt */
+    border: none;              /* Mất viền */
+    color: #212529;            /* Chữ đậm */
+    font-weight: 500;
+}
+
+/* 2. Ẩn nút chọn ảnh khi ở chế độ xem (View Mode) */
+.view-mode .avatar-edit {
+    display: none;
+}
+
+/* 3. Style cho ảnh xem trước (Preview) ở form chính */
+.avatar-preview img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #e9ecef;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* 4. Style cho ảnh Avatar nhỏ ở cột bên trái (Sidebar) */
+.sidebar-avatar-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* 5. Tùy chỉnh Menu Tabs bên trái */
+.nav-pills .nav-link {
+    color: #495057;
+    margin-bottom: 5px;
+    transition: all 0.3s;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #e9ecef;
+    color: #000;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #0d6efd;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(13, 110, 253, 0.3);
+}
+
+/* 6. Icon trong menu */
+.nav-pills .nav-link i {
+    width: 25px;
+    text-align: center;
+}

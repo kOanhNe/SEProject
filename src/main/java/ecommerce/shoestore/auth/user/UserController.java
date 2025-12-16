@@ -1,108 +1,89 @@
 package ecommerce.shoestore.auth.user;
 
-import ecommerce.shoestore.auth.dto.UserProfileDto;
-// Import Service Upload (Hãy chắc chắn bạn đã tạo file này ở bước trước)
-import ecommerce.shoestore.auth.image.FileUploadService; 
-
+import ecommerce.shoestore.auth.user.dto.ChangePasswordRequest;
+import ecommerce.shoestore.auth.user.dto.UpdateProfileRequest;
 import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid; // Import Validate
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile; // Import để nhận file
-
-import java.util.Enumeration;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/user")
+@RequestMapping("/user/profile")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private FileUploadService fileUploadService; // 1. Inject Service Upload
-
-    // --- 1. HIỂN THỊ HỒ SƠ ---
-    @GetMapping("/profile")
-    public String showProfile(HttpSession session, Model model) {
-        Long userId = (Long) session.getAttribute("USER_ID");
-        
-        // --- Debug Session (Giữ lại để bạn kiểm tra lỗi) ---
+    @GetMapping
+    public String viewProfile(HttpSession session, Model model) {
         System.out.println("DEBUG PROFILE:");
-        System.out.println(" - Đọc USER_ID từ Session: " + userId);
-        if (userId == null) {
-            System.out.println("SESSION ATTRIBUTES HIỆN CÓ:");
-            Enumeration<String> attrs = session.getAttributeNames();
-            while(attrs.hasMoreElements()) {
-                String name = attrs.nextElement();
-                System.out.println(" - " + name + " = " + session.getAttribute(name));
-            }
-            System.out.println(">>> LỖI: Không tìm thấy ID -> Đá về Login");
-            return "redirect:/auth/login";
-        }
-        // ---------------------------------------------------
+        System.out.println(" - Session ID: " + session.getId());
 
-        // Lấy thông tin user đưa vào model
-        UserProfileDto profileDto = userService.getUserProfile(userId);
-        
-        // Nạp thông tin Header
-        model.addAttribute("isLoggedIn", true);
-        model.addAttribute("fullname", session.getAttribute("FULLNAME"));
-        model.addAttribute("role", session.getAttribute("ROLE"));
-        
-        // Đưa DTO vào form
-        model.addAttribute("profile", profileDto);
-        
-        return "user/profile"; 
-    }
-
-    // --- 2. XỬ LÝ CẬP NHẬT (CÓ ẢNH) ---
-    @PostMapping("/profile/update")
-    public String updateProfile(@Valid @ModelAttribute("profile") UserProfileDto request,
-                                BindingResult result, // Biến chứa lỗi validate
-                                @RequestParam("avatarFile") MultipartFile file, // 2. Nhận file ảnh từ form
-                                HttpSession session, 
-                                Model model) {
-        
         Long userId = (Long) session.getAttribute("USER_ID");
-        if (userId == null) return "redirect:/auth/login";
+        String email = (String) session.getAttribute("EMAIL");
 
-        // 3. Nếu dữ liệu nhập sai (VD: bỏ trống tên) -> Trả về form báo lỗi
-        if (result.hasErrors()) {
-            // Nạp lại header để giao diện không bị vỡ
-            model.addAttribute("isLoggedIn", true);
-            model.addAttribute("fullname", session.getAttribute("FULLNAME"));
-            model.addAttribute("role", session.getAttribute("ROLE"));
-            return "user/profile";
+        System.out.println(" - USER_ID trong Session: " + userId);
+        System.out.println(" - EMAIL trong Session: " + email);
+
+        if (userId == null || email == null) {
+            System.out.println(">>> THẤT BẠI: Session thiếu dữ liệu -> Redirect về Login");
+            return "redirect:/auth/login";
         }
 
         try {
-            // 4. Xử lý Upload ảnh (Nếu người dùng có chọn file)
-            if (!file.isEmpty()) {
-                // Upload lên Cloudinary và lấy link URL
-                String imageURL = fileUploadService.uploadFile(file);
-                // Gán link vào DTO
-                request.setAvatar(imageURL);
+            UpdateProfileRequest profileData = userService.getProfileForDisplay(email);
 
-                session.setAttribute("AVATAR", imageURL);
-            }
-
-            // 5. Gọi Service lưu vào DB
-            userService.updateUserProfile(userId, request);
-            
-            // Cập nhật lại tên trong Session (phòng trường hợp đổi tên)
-            session.setAttribute("FULLNAME", request.getFullname());
-            
-            model.addAttribute("message", "Cập nhật hồ sơ thành công!");
+            model.addAttribute("profile", profileData);
+            return "user/profile";
         } catch (Exception e) {
-            e.printStackTrace(); // In lỗi ra terminal để dễ sửa
-            model.addAttribute("error", "Lỗi: " + e.getMessage());
+            return "redirect:/auth/login";
+        }
+    }
+
+    @PostMapping("/update")
+    public String updateProfile(@ModelAttribute UpdateProfileRequest request,
+                                HttpSession session,
+                                RedirectAttributes redirectAttributes) {
+
+        String email = (String) session.getAttribute("EMAIL");
+        if (email == null) return "redirect:/auth/login";
+
+        try {
+            userService.updateProfile(email, request);
+
+            session.setAttribute("FULLNAME", request.getFullname());
+
+            User updatedUser = userService.getCurrentUser(email);
+            session.setAttribute("AVATAR", updatedUser.getAvatar());
+
+            redirectAttributes.addFlashAttribute("successMessage", "Cập nhật hồ sơ thành công!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: " + e.getMessage());
         }
 
-        // Load lại trang profile
-        return showProfile(session, model);
+        return "redirect:/user/profile";
+    }
+
+    @PostMapping("/change-password")
+    public String changePassword(@ModelAttribute ChangePasswordRequest request,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+
+        String username = (String) session.getAttribute("USER_NAME"); // AuthController lưu email làm định danh
+        if (username == null) return "redirect:/auth/login";
+
+        try {
+            userService.changePassword( username, request);
+            redirectAttributes.addFlashAttribute("successMessage", "Đổi mật khẩu thành công!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        redirectAttributes.addFlashAttribute("activeTab", "password");
+
+        return "redirect:/user/profile";
     }
 }
