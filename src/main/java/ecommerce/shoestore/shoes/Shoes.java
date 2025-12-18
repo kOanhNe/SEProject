@@ -26,6 +26,7 @@ public class Shoes {
     @Column(nullable = false, length = 500)
     private String name;
 
+    @Column(length = 255)
     private String brand;
 
     @Enumerated(EnumType.STRING)
@@ -38,6 +39,7 @@ public class Shoes {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(length = 255)
     private String collection;
 
     @ManyToOne(fetch = FetchType.LAZY)

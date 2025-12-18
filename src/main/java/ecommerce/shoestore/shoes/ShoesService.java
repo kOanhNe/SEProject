@@ -8,9 +8,7 @@ import ecommerce.shoestore.shoesimage.ShoesImage;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +23,9 @@ public class ShoesService {
     private final ShoesRepository shoesRepository;
     private final ShoesVariantRepository variantRepository;
 
+    /* =========================
+       CUSTOMER – LIST PRODUCT
+       ========================= */
     @Transactional(readOnly = true)
     public ShoesListDto getShoesList(int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
@@ -45,6 +46,9 @@ public class ShoesService {
                 .build();
     }
 
+    /* =========================
+       CUSTOMER – PRODUCT DETAIL
+       ========================= */
     @Transactional(readOnly = true)
     public ShoesDetailDto getShoesDetail(Long shoeId) {
         Shoes shoes = shoesRepository.findByIdWithDetails(shoeId)
@@ -52,6 +56,10 @@ public class ShoesService {
 
         return convertToDetailDto(shoes);
     }
+
+    /* =========================
+       PRIVATE – CUSTOMER SUPPORT
+       ========================= */
 
     private Map<Long, Integer> getStockMapForShoes(List<Shoes> shoesList) {
         if (shoesList.isEmpty()) {
@@ -87,7 +95,9 @@ public class ShoesService {
     }
 
     private ShoesDetailDto convertToDetailDto(Shoes shoes) {
-        String categoryName = shoes.getCategory() != null ? shoes.getCategory().getName() : "General";
+        String categoryName = shoes.getCategory() != null
+                ? shoes.getCategory().getName()
+                : "General";
 
         List<String> imageUrls = new ArrayList<>();
         String thumbnailUrl = null;
@@ -127,8 +137,6 @@ public class ShoesService {
             }
         }
 
-        List<ShoesSummaryDto> relatedProducts = getRelatedProducts(shoes);
-
         return ShoesDetailDto.builder()
                 .shoeId(shoes.getShoeId())
                 .name(shoes.getName())
@@ -142,42 +150,17 @@ public class ShoesService {
                 .sizes(sizes)
                 .colors(colors)
                 .totalStock(totalStock)
-                .relatedProducts(relatedProducts)
                 .build();
     }
 
     private String getThumbnailUrl(Shoes shoes) {
         if (shoes.getImages() != null && !shoes.getImages().isEmpty()) {
-            Optional<ShoesImage> thumbnail = shoes.getImages().stream()
+            return shoes.getImages().stream()
                     .filter(ShoesImage::isThumbnail)
-                    .findFirst();
-
-            if (thumbnail.isPresent()) {
-                return thumbnail.get().getUrl();
-            }
-            return shoes.getImages().iterator().next().getUrl();
+                    .findFirst()
+                    .map(ShoesImage::getUrl)
+                    .orElse(shoes.getImages().iterator().next().getUrl());
         }
         return "https://placehold.co/400x400?text=No+Image";
-    }
-
-    private List<ShoesSummaryDto> getRelatedProducts(Shoes shoes) {
-        if (shoes.getCategory() == null) {
-            return new ArrayList<>();
-        }
-
-        Pageable pageable = PageRequest.of(0, 5);
-
-        Page<Shoes> relatedPage = shoesRepository.findRelatedProducts(
-                shoes.getCategory().getCategoryId(),
-                shoes.getShoeId(),
-                pageable
-        );
-
-        List<Shoes> relatedList = relatedPage.getContent();
-        Map<Long, Integer> stockMap = getStockMapForShoes(relatedList);
-
-        return relatedList.stream()
-                .map(s -> convertToSummaryDto(s, stockMap))
-                .collect(Collectors.toList());
     }
 }
