@@ -29,16 +29,17 @@
                 <span class = "menu-label">Quản lý tồn kho</span>
             </a>
 
-            <hr>
+            <hr/>
 
-            <a href="#" class="menu-item disabled">
-                <span class="menu-icon">🎯</span>
-                <span class="menu-label">Quản lý khuyến mãi</span>
+            <a th:href="@{admin/order}" class="menu-item"
+                th:classappend="${activeMenu == 'order'} ? 'active' : ''">
+                <span class="menu-icon">📦</span>
+                <span class="menu-label">Quản lý đơn hàng</span>
             </a>
 
             <a href="#" class="menu-item disabled">
-                <span class="menu-icon">📦</span>
-                <span class="menu-label">Quản lý đơn hàng</span>
+                <span class="menu-icon">🎯</span>🎯
+                <span class="menu-label">Quản lý khuyến mãi</span>
             </a>
 
             <a href="#" class="menu-item disabled">
