@@ -1,0 +1,41 @@
+<div th:fragment="main-content">
+
+    <!-- Nội dung riêng của trang Tồn kho -->
+    <div class="card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <!-- Form tìm kiếm -->
+            <form class="d-flex gap-2">
+                <input type="text" class="form-control" placeholder="Tìm sản phẩm...">
+                <button class="btn btn-primary">Tìm</button>
+            </form>
+            
+            <a th:href="@{/admin/inventory/import}" class="btn btn-success">
+                + Nhập hàng mới
+            </a>
+        </div>
+
+        <!-- Bảng dữ liệu -->
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dữ liệu mẫu -->
+                <tr>
+                    <td>#101</td>
+                    <td>Nike Air Force 1</td>
+                    <td>50</td>
+                    <td><span class="badge bg-success">Còn hàng</span></td>
+                    <td><a href="#">Chi tiết</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>

@@ -23,6 +23,11 @@
                 <span class="menu-icon">🛍️</span>
                 <span class="menu-label">Quản lý sản phẩm</span>
             </a>
+            <a th:href="@{/admin/inventory}" class = "menu-item"
+                th:classappend="${activeMenu == 'inventory'} ? 'active' : ''">
+                <span class = "menu-icon">🏭</span>
+                <span class = "menu-label">Quản lý tồn kho</span>
+            </a>
 
             <hr>
 
