@@ -1,7 +1,11 @@
 package ecommerce.shoestore.promotion;
 
+import ecommerce.shoestore.category.Category;
+import ecommerce.shoestore.category.CategoryRepository;
 import ecommerce.shoestore.promotion.dto.CampaignForm;
 import ecommerce.shoestore.promotion.dto.VoucherForm;
+import ecommerce.shoestore.shoes.Shoes;
+import ecommerce.shoestore.shoes.ShoesRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,6 +25,9 @@ public class PromotionService {
     private final PromotionCampaignRepository campaignRepository;
     private final VoucherRepository voucherRepository;
     private final OrderVoucherRepository orderVoucherRepository;
+    private final PromotionTargetRepository promotionTargetRepository;
+    private final ShoesRepository shoesRepository;
+    private final CategoryRepository categoryRepository;
 
     /* ===== Campaign ===== */
     @Transactional(readOnly = true)
@@ -44,7 +52,7 @@ public class PromotionService {
 
     @Transactional(readOnly = true)
     public PromotionCampaign getCampaign(Long id) {
-        return campaignRepository.findById(id)
+        return campaignRepository.findByIdWithTargets(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy chiến dịch"));
     }
 
@@ -67,8 +75,53 @@ public class PromotionService {
         campaign.setStatus(resolveStatus(campaign.getEnabled(), campaign.getStartDate(), campaign.getEndDate()));
 
         PromotionCampaign saved = campaignRepository.save(campaign);
-        log.info("Saved campaign {}", saved.getCampaignId());
+        
+        // Save targets
+        saveTargets(saved, form.getTargetType(), form.getShoeIds(), form.getCategoryIds());
+        
+        log.info("Saved campaign {} with targets", saved.getCampaignId());
         return saved;
+    }
+    
+    @Transactional
+    public void saveTargets(PromotionCampaign campaign, ProductTargetType targetType, List<Long> shoeIds, List<Long> categoryIds) {
+        // Delete existing targets
+        promotionTargetRepository.deleteByCampaign_CampaignId(campaign.getCampaignId());
+        
+        if (targetType == ProductTargetType.ALL) {
+            // Create one target with ALL
+            PromotionTarget target = PromotionTarget.builder()
+                    .targetType(ProductTargetType.ALL)
+                    .campaign(campaign)
+                    .build();
+            promotionTargetRepository.save(target);
+        } else if (targetType == ProductTargetType.PRODUCT && shoeIds != null && !shoeIds.isEmpty()) {
+            // Create target for each shoe
+            for (Long shoeId : shoeIds) {
+                Shoes shoe = shoesRepository.findById(shoeId).orElse(null);
+                if (shoe != null) {
+                    PromotionTarget target = PromotionTarget.builder()
+                            .targetType(ProductTargetType.PRODUCT)
+                            .shoe(shoe)
+                            .campaign(campaign)
+                            .build();
+                    promotionTargetRepository.save(target);
+                }
+            }
+        } else if (targetType == ProductTargetType.CATEGORY && categoryIds != null && !categoryIds.isEmpty()) {
+            // Create target for each category
+            for (Long categoryId : categoryIds) {
+                Category category = categoryRepository.findById(categoryId).orElse(null);
+                if (category != null) {
+                    PromotionTarget target = PromotionTarget.builder()
+                            .targetType(ProductTargetType.CATEGORY)
+                            .category(category)
+                            .campaign(campaign)
+                            .build();
+                    promotionTargetRepository.save(target);
+                }
+            }
+        }
     }
 
     @Transactional
@@ -112,7 +165,7 @@ public class PromotionService {
 
     @Transactional(readOnly = true)
     public Voucher getVoucher(Long id) {
-        return voucherRepository.findById(id)
+        return voucherRepository.findByIdWithCampaign(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy voucher"));
     }
 
@@ -155,9 +208,10 @@ public class PromotionService {
     @Transactional
     public void deleteVoucher(Long id) {
         Voucher v = getVoucher(id);
-        if (orderVoucherRepository.existsByVoucher_VoucherId(id)) {
-            throw new IllegalStateException("Voucher đã được sử dụng, không thể xóa");
-        }
+        // TODO: Uncomment khi module Order được implement
+        // if (orderVoucherRepository.existsByVoucher_VoucherId(id)) {
+        //     throw new IllegalStateException("Voucher đã được sử dụng, không thể xóa");
+        // }
         voucherRepository.delete(v);
     }
 

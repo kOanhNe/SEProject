@@ -33,8 +33,12 @@
                         <h2 style="margin: 0; font-size: 28px; font-weight: 700;" th:text="${campaign.name}">Tên chiến dịch</h2>
                         <div style="display: flex; gap: 8px; align-items: center;">
                             <span class="badge"
-                                  th:classappend="${campaign.status.name() == 'ACTIVE'} ? ' badge-success' : (${campaign.status.name() == 'ENDED' || campaign.status.name() == 'CANCELLED'} ? ' badge-danger' : ' badge-warning')"
-                                  th:text="${campaign.status}"></span>
+                                  th:classappend="${campaign.status.name() == 'ACTIVE'} ? ' badge-success' : (${campaign.status.name() == 'ENDED' || campaign.status.name() == 'CANCELLED'} ? ' badge-danger' : ' badge-warning')">
+                                <span th:if="${campaign.status.name() == 'DRAFT'}">Nháp</span>
+                                <span th:if="${campaign.status.name() == 'ACTIVE'}">Đang hoạt động</span>
+                                <span th:if="${campaign.status.name() == 'ENDED'}">Đã kết thúc</span>
+                                <span th:if="${campaign.status.name() == 'CANCELLED'}">Đã hủy</span>
+                            </span>
                             <span th:if="${campaign.enabled}" class="chip-on">● Đang bật</span>
                             <span th:unless="${campaign.enabled}" class="chip-off">● Đã tắt</span>
                         </div>
@@ -69,7 +73,7 @@
                             <div style="color: #15803d; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Loại giảm giá</div>
                             <div style="font-size: 16px; font-weight: 600; color: #166534;">
                                 <span th:if="${campaign.discountType.name() == 'PERCENT'}">Phần trăm (%)</span>
-                                <span th:if="${campaign.discountType.name() == 'FIXED'}">Số tiền cố định (VNĐ)</span>
+                                <span th:if="${campaign.discountType.name() == 'FIXED_AMOUNT'}">Số tiền cố định (VNĐ)</span>
                             </div>
                         </div>
                         <div>
@@ -77,7 +81,7 @@
                             <div style="font-size: 24px; font-weight: 700; color: #166534;">
                                 <span th:text="${campaign.discountValue}">10</span>
                                 <span th:if="${campaign.discountType.name() == 'PERCENT'}">%</span>
-                                <span th:if="${campaign.discountType.name() == 'FIXED'}"> VNĐ</span>
+                                <span th:if="${campaign.discountType.name() == 'FIXED_AMOUNT'}"> VNĐ</span>
                             </div>
                         </div>
                         <div>
@@ -101,8 +105,50 @@
                     </div>
                 </div>
 
+                <!-- Target Application Section -->
+                <div style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 2px solid #d8b4fe; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+                    <h3 style="margin: 0 0 20px 0; font-size: 18px; font-weight: 700; color: #6b21a8;">Phạm vi áp dụng</h3>
+                    <div th:if="${campaign.targets != null and !campaign.targets.isEmpty()}">
+                        <div style="color: #7c3aed; font-size: 13px; font-weight: 600; margin-bottom: 8px;">Loại áp dụng</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #6b21a8; margin-bottom: 16px;">
+                            <span th:if="${campaign.targets[0].targetType.name() == 'ALL'}">Tất cả sản phẩm</span>
+                            <span th:if="${campaign.targets[0].targetType.name() == 'PRODUCT'}">Sản phẩm cụ thể</span>
+                            <span th:if="${campaign.targets[0].targetType.name() == 'CATEGORY'}">Theo danh mục</span>
+                        </div>
+                        
+                        <!-- Show specific products -->
+                        <div th:if="${campaign.targets[0].targetType.name() == 'PRODUCT'}">
+                            <div style="color: #7c3aed; font-size: 13px; font-weight: 600; margin-bottom: 8px;">Sản phẩm được áp dụng</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <span th:each="target : ${campaign.targets}" 
+                                      th:if="${target.shoe != null}"
+                                      style="background: white; border: 1px solid #c084fc; border-radius: 6px; padding: 6px 12px; font-size: 14px; color: #6b21a8;"
+                                      th:text="${target.shoe.name}">
+                                    Sản phẩm
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Show categories -->
+                        <div th:if="${campaign.targets[0].targetType.name() == 'CATEGORY'}">
+                            <div style="color: #7c3aed; font-size: 13px; font-weight: 600; margin-bottom: 8px;">Danh mục được áp dụng</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <span th:each="target : ${campaign.targets}" 
+                                      th:if="${target.category != null}"
+                                      style="background: white; border: 1px solid #c084fc; border-radius: 6px; padding: 6px 12px; font-size: 14px; color: #6b21a8;"
+                                      th:text="${target.category.categoryName}">
+                                    Danh mục
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:unless="${campaign.targets != null and !campaign.targets.isEmpty()}" style="color: #9ca3af; font-style: italic;">
+                        Chưa thiết lập phạm vi áp dụng
+                    </div>
+                </div>
+
                 <!-- Action Buttons -->
-                <div style="display: flex; gap: 12px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+                <div class="detail-actions">
                     <a th:href="@{|/admin/promotions/campaigns/${campaign.campaignId}/edit|}" class="btn btn-primary" style="padding: 10px 24px;">
                         Chỉnh sửa chiến dịch
                     </a>

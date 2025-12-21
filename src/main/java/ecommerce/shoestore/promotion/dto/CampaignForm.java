@@ -1,5 +1,6 @@
 package ecommerce.shoestore.promotion.dto;
 
+import ecommerce.shoestore.promotion.ProductTargetType;
 import ecommerce.shoestore.promotion.PromotionCampaignStatus;
 import ecommerce.shoestore.promotion.VoucherDiscountType;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +10,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class CampaignForm {
@@ -39,4 +41,9 @@ public class CampaignForm {
     private PromotionCampaignStatus status;
 
     private Boolean enabled = Boolean.TRUE;
+    
+    // Target fields
+    private ProductTargetType targetType = ProductTargetType.ALL;
+    private List<Long> shoeIds;
+    private List<Long> categoryIds;
 }

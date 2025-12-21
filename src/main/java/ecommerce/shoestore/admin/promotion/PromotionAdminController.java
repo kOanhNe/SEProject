@@ -1,8 +1,10 @@
 package ecommerce.shoestore.admin.promotion;
 
+import ecommerce.shoestore.category.CategoryRepository;
 import ecommerce.shoestore.promotion.*;
 import ecommerce.shoestore.promotion.dto.CampaignForm;
 import ecommerce.shoestore.promotion.dto.VoucherForm;
+import ecommerce.shoestore.shoes.ShoesRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Controller
 @RequestMapping("/admin/promotions")
 @RequiredArgsConstructor
@@ -19,6 +24,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class PromotionAdminController {
 
     private final PromotionService promotionService;
+    private final ShoesRepository shoesRepository;
+    private final CategoryRepository categoryRepository;
+    private final PromotionTargetRepository promotionTargetRepository;
 
     /* ===== Campaign ===== */
     @GetMapping("/campaigns")
@@ -61,29 +69,66 @@ public class PromotionAdminController {
             form.setMinOrderValue(c.getMinOrderValue());
             form.setStatus(c.getStatus());
             form.setEnabled(c.getEnabled());
+            
+            // Load existing targets from campaign (already fetched)
+            List<PromotionTarget> targets = c.getTargets();
+            if (targets != null && !targets.isEmpty()) {
+                ProductTargetType targetType = targets.get(0).getTargetType();
+                form.setTargetType(targetType);
+                
+                if (targetType == ProductTargetType.PRODUCT) {
+                    List<Long> shoeIds = targets.stream()
+                            .filter(t -> t.getShoe() != null)
+                            .map(t -> t.getShoe().getShoeId())
+                            .collect(Collectors.toList());
+                    form.setShoeIds(shoeIds);
+                    model.addAttribute("selectedShoeIds", shoeIds);
+                } else if (targetType == ProductTargetType.CATEGORY) {
+                    List<Long> categoryIds = targets.stream()
+                            .filter(t -> t.getCategory() != null)
+                            .map(t -> t.getCategory().getCategoryId())
+                            .collect(Collectors.toList());
+                    form.setCategoryIds(categoryIds);
+                    model.addAttribute("selectedCategoryIds", categoryIds);
+                }
+            }
         }
+        
         model.addAttribute("activeMenu", "promotions");
         model.addAttribute("pageTitle", id == null ? "Tạo chiến dịch" : "Sửa chiến dịch");
         model.addAttribute("campaign", form);
         model.addAttribute("discountTypes", VoucherDiscountType.values());
         model.addAttribute("statuses", PromotionCampaignStatus.values());
+        model.addAttribute("targetTypes", ProductTargetType.values());
+        model.addAttribute("allShoes", shoesRepository.findAll());
+        model.addAttribute("allCategories", categoryRepository.findAll());
         return "admin/promotion/campaign-form";
     }
 
     @PostMapping({"/campaigns/create", "/campaigns/{id}/edit"})
     public String saveCampaign(@PathVariable(name = "id", required = false) Long id,
                                @Valid @ModelAttribute("campaign") CampaignForm form,
+                               @RequestParam(required = false) List<Long> shoeIds,
+                               @RequestParam(required = false) List<Long> categoryIds,
                                BindingResult bindingResult,
                                Model model,
                                RedirectAttributes redirectAttributes) {
         if (id != null) {
             form.setCampaignId(id);
         }
+        
+        // Set target fields from request params
+        form.setShoeIds(shoeIds);
+        form.setCategoryIds(categoryIds);
+        
         if (bindingResult.hasErrors()) {
             model.addAttribute("activeMenu", "promotions");
             model.addAttribute("pageTitle", id == null ? "Tạo chiến dịch" : "Sửa chiến dịch");
             model.addAttribute("discountTypes", VoucherDiscountType.values());
             model.addAttribute("statuses", PromotionCampaignStatus.values());
+            model.addAttribute("targetTypes", ProductTargetType.values());
+            model.addAttribute("allShoes", shoesRepository.findAll());
+            model.addAttribute("allCategories", categoryRepository.findAll());
             return "admin/promotion/campaign-form";
         }
         try {
@@ -97,6 +142,9 @@ public class PromotionAdminController {
             model.addAttribute("pageTitle", id == null ? "Tạo chiến dịch" : "Sửa chiến dịch");
             model.addAttribute("discountTypes", VoucherDiscountType.values());
             model.addAttribute("statuses", PromotionCampaignStatus.values());
+            model.addAttribute("targetTypes", ProductTargetType.values());
+            model.addAttribute("allShoes", shoesRepository.findAll());
+            model.addAttribute("allCategories", categoryRepository.findAll());
             model.addAttribute("error", e.getMessage());
             return "admin/promotion/campaign-form";
         }

@@ -29,7 +29,7 @@
         <main class="page-content">
             <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
-            <div class="card" style="max-width: 900px;">
+            <div class="card" style="max-width: 900px; margin: 0 auto;">
                 <div style="margin-bottom: 24px;">
                     <h3 class="section-title" th:text="${pageTitle}">Tạo chiến dịch</h3>
                     <p class="section-sub">Điền đầy đủ thông tin chiến dịch để áp dụng giảm giá cho khách hàng.</p>
@@ -79,9 +79,10 @@
                             <label class="required">Loại giảm</label>
                             <select th:field="*{discountType}" required>
                                 <option value="">-- Chọn loại giảm --</option>
-                                <option th:each="t : ${discountTypes}" th:value="${t}" th:text="${t}"></option>
+                                <option value="PERCENT">Giảm theo phần trăm (%)</option>
+                                <option value="FIXED_AMOUNT">Giảm số tiền cố định (VNĐ)</option>
                             </select>
-                            <small style="color: #6b7280; font-size: 12px;">PERCENT (%) hoặc FIXED (VNĐ)</small>
+                            <small style="color: #6b7280; font-size: 12px;">PERCENT (%) hoặc FIXED_AMOUNT (VNĐ)</small>
                             <div class="error-message" th:if="${#fields.hasErrors('discountType')}" th:errors="*{discountType}"></div>
                         </div>
                         <div class="form-group">
@@ -105,22 +106,51 @@
                         </div>
                     </div>
 
+                    <!-- Phạm vi áp dụng section -->
                     <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
-                        <div class="form-group" style="display:flex; align-items:center; gap:12px;">
-                            <label style="margin:0; font-weight: 600;">Kích hoạt chiến dịch</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" th:field="*{enabled}">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <small style="color: #6b7280; font-size: 12px; margin-left: 8px;">Bật/tắt chiến dịch ngay lập tức</small>
+                        <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1f2937;">Phạm vi áp dụng</h4>
+                        
+                        <div class="form-group full-width">
+                            <label class="required">Loại áp dụng</label>
+                            <select th:field="*{targetType}" id="targetTypeSelect" required onchange="toggleTargetSelection()">
+                                <option th:each="t : ${targetTypes}" th:value="${t}"
+                                        th:text="${t == T(ecommerce.shoestore.promotion.ProductTargetType).ALL ? 'Tất cả sản phẩm' :
+                                                  (t == T(ecommerce.shoestore.promotion.ProductTargetType).PRODUCT ? 'Sản phẩm cụ thể' : 'Theo danh mục')}">
+                                </option>
+                            </select>
+                            <small style="color: #6b7280; font-size: 12px;">Chọn phạm vi sản phẩm được áp dụng giảm giá</small>
+                        </div>
+                        
+                        <div id="productSelection" class="form-group full-width" style="display: none;">
+                            <label class="required">Chọn sản phẩm</label>
+                            <select name="shoeIds" multiple size="8" style="height: auto;">
+                                <option th:each="shoe : ${allShoes}" 
+                                        th:value="${shoe.shoeId}" 
+                                        th:text="${shoe.name}"
+                                        th:selected="${selectedShoeIds != null && #lists.contains(selectedShoeIds, shoe.shoeId)}">
+                                </option>
+                            </select>
+                            <small style="color: #6b7280; font-size: 12px;">Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều sản phẩm</small>
+                        </div>
+                        
+                        <div id="categorySelection" class="form-group full-width" style="display: none;">
+                            <label class="required">Chọn danh mục</label>
+                            <select name="categoryIds" multiple size="5" style="height: auto;">
+                                <option th:each="cat : ${allCategories}" 
+                                        th:value="${cat.categoryId}" 
+                                    th:text="${cat.name}"
+                                        th:selected="${selectedCategoryIds != null && #lists.contains(selectedCategoryIds, cat.categoryId)}">
+                                </option>
+                            </select>
+                            <small style="color: #6b7280; font-size: 12px;">Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều danh mục</small>
                         </div>
                     </div>
 
-                    <div class="form-actions" style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb; display: flex; gap: 12px;">
-                        <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" style="padding: 12px 28px; border-radius: 10px;">
                             Lưu chiến dịch
                         </button>
-                        <a th:href="@{/admin/promotions/campaigns}" class="btn btn-secondary" style="padding: 10px 24px;">
+                        <a th:href="@{/admin/promotions/campaigns}" class="btn btn-secondary" style="padding: 12px 28px; border-radius: 10px;">
                             Hủy bỏ
                         </a>
                     </div>
@@ -142,6 +172,27 @@
         if (overlay) {
             overlay.classList.add('show');
         }
+    });
+    
+    // Toggle target selection based on targetType
+    function toggleTargetSelection() {
+        const targetType = document.getElementById('targetTypeSelect').value;
+        const productSelection = document.getElementById('productSelection');
+        const categorySelection = document.getElementById('categorySelection');
+        
+        productSelection.style.display = 'none';
+        categorySelection.style.display = 'none';
+        
+        if (targetType === 'PRODUCT') {
+            productSelection.style.display = 'block';
+        } else if (targetType === 'CATEGORY') {
+            categorySelection.style.display = 'block';
+        }
+    }
+    
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        toggleTargetSelection();
     });
 </script>
 </body>

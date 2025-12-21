@@ -79,7 +79,7 @@
                             <div style="color: #15803d; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Loại giảm giá</div>
                             <div style="font-size: 16px; font-weight: 600; color: #166534;">
                                 <span th:if="${voucher.discountType.name() == 'PERCENT'}">Phần trăm (%)</span>
-                                <span th:if="${voucher.discountType.name() == 'FIXED'}">Số tiền cố định (VNĐ)</span>
+                                <span th:if="${voucher.discountType.name() == 'FIXED_AMOUNT'}">Số tiền cố định (VNĐ)</span>
                             </div>
                         </div>
                         <div>
@@ -87,7 +87,7 @@
                             <div style="font-size: 24px; font-weight: 700; color: #166534;">
                                 <span th:text="${voucher.discountValue}">10</span>
                                 <span th:if="${voucher.discountType.name() == 'PERCENT'}">%</span>
-                                <span th:if="${voucher.discountType.name() == 'FIXED'}"> VNĐ</span>
+                                <span th:if="${voucher.discountType.name() == 'FIXED_AMOUNT'}"> VNĐ</span>
                             </div>
                         </div>
                         <div>
@@ -112,16 +112,11 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div style="display: flex; gap: 12px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+                <div class="detail-actions">
                     <a th:href="@{|/admin/promotions/vouchers/${voucher.voucherId}/edit|}" class="btn btn-primary" style="padding: 10px 24px;">
                         Chỉnh sửa voucher
                     </a>
-                    <form th:action="@{|/admin/promotions/vouchers/${voucher.voucherId}/delete|}" method="post" style="display: inline;" onsubmit="return confirm('Bạn chắc chắn muốn xóa voucher này?');">
-                        <button type="submit" class="btn btn-danger" style="padding: 10px 24px;">
-                            Xóa voucher
-                        </button>
-                    </form>
-                    <a th:href="@{/admin/promotions/vouchers}" class="btn" style="padding: 10px 24px; margin-left: auto;">
+                    <a th:href="@{/admin/promotions/vouchers}" class="btn btn-secondary" style="padding: 10px 24px; margin-left: auto;">
                         Quay lại danh sách
                     </a>
                 </div>

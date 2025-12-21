@@ -116,22 +116,11 @@
                         </div>
                     </div>
 
-                    <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
-                        <div class="form-group" style="display:flex; align-items:center; gap:12px;">
-                            <label style="margin:0; font-weight: 600;">Kích hoạt voucher</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" th:field="*{enabled}">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <small style="color: #6b7280; font-size: 12px; margin-left: 8px;">Bật/tắt voucher ngay lập tức</small>
-                        </div>
-                    </div>
-
-                    <div class="form-actions" style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb; display: flex; gap: 12px;">
-                        <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" style="padding: 12px 28px; border-radius: 10px;">
                             Lưu voucher
                         </button>
-                        <a th:href="@{/admin/promotions/vouchers}" class="btn btn-secondary" style="padding: 10px 24px;">
+                        <a th:href="@{/admin/promotions/vouchers}" class="btn btn-secondary" style="padding: 12px 28px; border-radius: 10px;">
                             Hủy bỏ
                         </a>
                     </div>

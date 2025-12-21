@@ -117,7 +117,10 @@
                                    th:text="${c.name}">Tên</a>
                             </td>
                             <td th:text="${c.startDate + ' → ' + c.endDate}">2024-01-01</td>
-                            <td th:text="${c.discountType}">PERCENT</td>
+                            <td>
+                                <span th:if="${c.discountType.name() == 'PERCENT'}">Phần trăm (%)</span>
+                                <span th:if="${c.discountType.name() == 'FIXED_AMOUNT'}">Cố định (VNĐ)</span>
+                            </td>
                             <td>
                                 <span th:text="${c.discountType.name() == 'PERCENT' ? c.discountValue : #numbers.formatDecimal(c.discountValue, 0, 'COMMA', 0, 'POINT')}"></span>
                                 <span th:if="${c.discountType.name() == 'PERCENT'}">%</span>
@@ -125,8 +128,12 @@
                             </td>
                             <td>
                                 <span class="badge"
-                                      th:classappend="${c.status.name() == 'ACTIVE'} ? ' badge-success' : (${c.status.name() == 'ENDED' || c.status.name() == 'CANCELLED'} ? ' badge-danger' : ' badge-warning')"
-                                      th:text="${c.status}"></span>
+                                      th:classappend="${c.status.name() == 'ACTIVE'} ? ' badge-success' : (${c.status.name() == 'ENDED' || c.status.name() == 'CANCELLED'} ? ' badge-danger' : ' badge-warning')">
+                                    <span th:if="${c.status.name() == 'DRAFT'}">Nháp</span>
+                                    <span th:if="${c.status.name() == 'ACTIVE'}">Đang hoạt động</span>
+                                    <span th:if="${c.status.name() == 'ENDED'}">Đã kết thúc</span>
+                                    <span th:if="${c.status.name() == 'CANCELLED'}">Đã hủy</span>
+                                </span>
                             </td>
                             <td>
                                 <form th:action="@{|/admin/promotions/campaigns/${c.campaignId}/toggle|}" method="post" style="margin: 0;">
