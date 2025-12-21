@@ -43,7 +43,7 @@
             border-radius: 6px;
             margin-bottom: 8px;
         }
-        .image-item input, .variant-item input, .variant-item select {
+        .image-item input[type="text"], .variant-item input, .variant-item select {
             flex: 1;
         }
         .btn-remove {
@@ -92,6 +92,16 @@
             font-size: 13px;
             margin-left: 10px;
         }
+        .upload-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .upload-status {
+            font-size: 12px;
+            color: #555;
+            min-width: 110px;
+        }
     </style>
 </head>
 <body>
@@ -121,7 +131,7 @@
             <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
             <div class="form-container">
-                <form th:action="@{/admin/products/{id}/edit(id=${shoes.shoeId})}" method="post">
+                <form th:action="@{/admin/products/{id}/edit(id=${shoes != null ? shoes.shoeId : 0})}" method="post">
 
                     <h2 style="margin-top: 0;">
                         Thông tin cơ bản
@@ -193,6 +203,11 @@
                                 <input type="checkbox" th:name="|images[${iterStat.index}].isThumbnail|" value="true" th:checked="${img.thumbnail}">
                                 Ảnh đại diện
                             </label>
+                            <div class="upload-controls">
+                                <input type="file" accept="image/*" onchange="handleFileChosen(this)">
+                                <button type="button" class="btn" onclick="uploadImage(this)">Upload</button>
+                                <span class="upload-status"></span>
+                            </div>
                             <button type="button" class="btn-remove" onclick="removeImage(this)">Xóa</button>
                         </div>
                         <!-- If no images -->
@@ -202,6 +217,11 @@
                                 <input type="checkbox" name="images[0].isThumbnail" value="true">
                                 Ảnh đại diện
                             </label>
+                            <div class="upload-controls">
+                                <input type="file" accept="image/*" onchange="handleFileChosen(this)">
+                                <button type="button" class="btn" onclick="uploadImage(this)">Upload</button>
+                                <span class="upload-status"></span>
+                            </div>
                             <button type="button" class="btn-remove" onclick="removeImage(this)">Xóa</button>
                         </div>
                     </div>
@@ -216,6 +236,7 @@
                             <input type="hidden" th:name="|variants[${iterStat.index}].variantId|" th:value="${v.variantId}">
                             <select th:name="|variants[${iterStat.index}].color|" required>
                                 <option value="">-- Chọn màu --</option>
+                                <option th:if="${v.color != null}" th:value="${v.color}" th:text="${v.color}" selected>--Giá trị hiện tại--</option>
                                 <option value="BLACK" th:selected="${v.color == 'BLACK'}">Đen</option>
                                 <option value="WHITE" th:selected="${v.color == 'WHITE'}">Trắng</option>
                                 <option value="BLUE" th:selected="${v.color == 'BLUE'}">Xanh dương</option>
@@ -226,12 +247,12 @@
                             </select>
                             <select th:name="|variants[${iterStat.index}].size|" required>
                                 <option value="">-- Chọn size --</option>
-                                <option th:each="s : ${#numbers.sequence(36, 43)}" 
-                                        th:value="${s}" 
-                                        th:text="${s}"
-                                        th:selected="${v.size == #strings.toString(s)}"></option>
+                                <option th:if="${v.size != null}" th:value="${v.size}" th:text="${#strings.replace(v.size,'SIZE_','')}" selected>--Hiện tại--</option>
+                                <option th:each="s : ${#numbers.sequence(35, 45)}" 
+                                    th:value="${'SIZE_' + s}" 
+                                    th:text="${s}"
+                                    th:selected="${v.size == 'SIZE_' + s}"></option>
                             </select>
-                            <input type="number" th:name="|variants[${iterStat.index}].stock|" th:value="${v.stock}" placeholder="Số lượng" min="0" required>
                             <button type="button" class="btn-remove" onclick="removeVariant(this)">Xóa</button>
                         </div>
                         <!-- If no variants -->
@@ -248,9 +269,8 @@
                             </select>
                             <select name="variants[0].size" required>
                                 <option value="">-- Chọn size --</option>
-                                <option th:each="s : ${#numbers.sequence(36, 43)}" th:value="${s}" th:text="${s}"></option>
+                                <option th:each="s : ${#numbers.sequence(35, 45)}" th:value="${'SIZE_' + s}" th:text="${s}"></option>
                             </select>
-                            <input type="number" name="variants[0].stock" placeholder="Số lượng" min="0" required>
                             <button type="button" class="btn-remove" onclick="removeVariant(this)">Xóa</button>
                         </div>
                     </div>
@@ -286,6 +306,11 @@
                 <input type="checkbox" name="images[${imageIndex}].isThumbnail" value="true">
                 Ảnh đại diện
             </label>
+            <div class="upload-controls">
+                <input type="file" accept="image/*" onchange="handleFileChosen(this)">
+                <button type="button" class="btn" onclick="uploadImage(this)">Upload</button>
+                <span class="upload-status"></span>
+            </div>
             <button type="button" class="btn-remove" onclick="removeImage(this)">Xóa</button>
         `;
         list.appendChild(div);
@@ -294,11 +319,7 @@
 
     function removeImage(btn) {
         const list = document.getElementById('imageList');
-        if (list.children.length > 1) {
-            btn.parentElement.remove();
-        } else {
-            alert('Phải có ít nhất 1 hình ảnh');
-        }
+        btn.parentElement.remove();
     }
 
     function addVariant() {
@@ -318,22 +339,42 @@
             </select>
             <select name="variants[${variantIndex}].size" required>
                 <option value="">-- Chọn size --</option>
-                ${[36,37,38,39,40,41,42,43].map(s => `<option value="${s}">${s}</option>`).join('')}
+                ${[35,36,37,38,39,40,41,42,43,44,45].map(s => `<option value="SIZE_${s}">${s}</option>`).join('')}
             </select>
-            <input type="number" name="variants[${variantIndex}].stock" placeholder="Số lượng" min="0" required>
             <button type="button" class="btn-remove" onclick="removeVariant(this)">Xóa</button>
         `;
         list.appendChild(div);
         variantIndex++;
+        reindexVariants();
     }
 
     function removeVariant(btn) {
         const list = document.getElementById('variantList');
         if (list.children.length > 1) {
             btn.parentElement.remove();
+            reindexVariants();
         } else {
             alert('Phải có ít nhất 1 biến thể');
         }
+    }
+
+    function reindexVariants() {
+        const list = document.getElementById('variantList');
+        Array.from(list.children).forEach((item, idx) => {
+            const variantId = item.querySelector('input[type="hidden"][name*="variantId"]');
+            if (variantId) {
+                variantId.name = `variants[${idx}].variantId`;
+            }
+            const selects = item.querySelectorAll('select');
+            selects.forEach(sel => {
+                if (sel.name.includes('.color')) {
+                    sel.name = `variants[${idx}].color`;
+                } else if (sel.name.includes('.size')) {
+                    sel.name = `variants[${idx}].size`;
+                }
+            });
+        });
+        variantIndex = list.children.length;
     }
 
     // Toggle sidebar
@@ -342,6 +383,65 @@
         const sidebar = document.querySelector('.sidebar');
         if (sidebar) {
             sidebar.classList.toggle('collapsed');
+        }
+    });
+
+    function handleFileChosen(input) {
+        const status = input.closest('.image-item').querySelector('.upload-status');
+        if (status) status.textContent = input.files && input.files[0] ? input.files[0].name : '';
+    }
+
+    async function uploadImage(btn) {
+        const container = btn.closest('.image-item');
+        const fileInput = container.querySelector('input[type="file"]');
+        const urlInput = container.querySelector('input[type="text"][name*="images"][name$=".url"]');
+        const status = container.querySelector('.upload-status');
+
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            alert('Vui lòng chọn file ảnh');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        btn.disabled = true;
+        if (status) status.textContent = 'Đang upload...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const resp = await fetch('/admin/uploads/images', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                throw new Error(data.error || 'Upload thất bại');
+            }
+            urlInput.value = data.url;
+            if (status) status.textContent = 'Đã nhận URL';
+        } catch (err) {
+            alert(err.message);
+            if (status) status.textContent = 'Lỗi upload';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // Trước khi submit: bỏ các item ảnh không có URL, đảm bảo còn ít nhất 1
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const list = document.getElementById('imageList');
+        const items = Array.from(list.querySelectorAll('.image-item'));
+        items.forEach(item => {
+            const urlInput = item.querySelector('input[type="text"][name*="images"][name$=".url"]');
+            if (!urlInput || !urlInput.value.trim()) {
+                item.remove();
+            }
+        });
+        const remaining = list.querySelectorAll('.image-item');
+        if (remaining.length === 0) {
+            e.preventDefault();
+            alert('Vui lòng upload ít nhất 1 hình ảnh hợp lệ');
         }
     });
 </script>

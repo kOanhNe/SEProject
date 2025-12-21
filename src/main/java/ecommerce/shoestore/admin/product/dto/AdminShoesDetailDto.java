@@ -24,8 +24,7 @@ public class AdminShoesDetailDto {
     private String collection;
     private Long categoryId;
     private String categoryName;
-    private String status;
-    private boolean deleted;
+    private Boolean status;
 
     private List<ImageDto> images;
     private List<VariantDto> variants;
@@ -48,6 +47,5 @@ public class AdminShoesDetailDto {
         private Long variantId;
         private String color;
         private String size;
-        private Integer stock;
     }
 }

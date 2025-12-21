@@ -1,368 +1,448 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quản lý sản phẩm - Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sản phẩm</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}">
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <style>
-        * { box-sizing: border-box; }
-        .toolbar {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 24px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .search-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-            align-items: center;
-            flex-wrap: wrap;
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
         }
-        .search-row input,
-        .search-row select {
-            padding: 10px 14px;
-            border: 1.5px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        .search-row input:focus,
-        .search-row select:focus {
-            outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-        }
-        .search-input {
-            flex: 1;
-            min-width: 250px;
-        }
-        .filter-select {
-            min-width: 180px;
-        }
-        .btn-row {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-primary {
-            background: #2196F3;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #1976D2;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-        }
-        .btn-success {
-            background: #4CAF50;
-            color: white;
-        }
-        .btn-success:hover {
-            background: #45a049;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-        }
-        .btn-warning {
-            background: #FF9800;
-            color: white;
-        }
-        .btn-warning:hover {
-            background: #F57C00;
-        }
-        .btn-danger {
-            background: #f44336;
-            color: white;
-        }
-        .btn-danger:hover {
-            background: #d32f2f;
-        }
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 13px;
-        }
-        .table-wrapper {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
+
+        /* Header */
+        .page-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 16px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-        }
-        tr:hover {
-            background: #f8f9fa;
-        }
-        .actions-cell {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .actions-cell form {
-            margin: 0;
-        }
-        .alert {
-            padding: 14px 18px;
+            padding: 30px;
             border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        /* Alert Messages */
+        .alert {
+            position: relative;
+            padding: 15px 20px;
+            border-radius: 8px;
             margin-bottom: 20px;
             font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
+
+        .alert button.close-btn {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: inherit;
+        }
+
         .alert-success {
             background: #d4edda;
             color: #155724;
             border-left: 4px solid #28a745;
         }
-        .alert-success::before {
-            content: '✓';
-            background: #28a745;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
+
         .alert-error {
             background: #f8d7da;
             color: #721c24;
             border-left: 4px solid #dc3545;
         }
-        .alert-error::before {
-            content: '✕';
-            background: #dc3545;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
+
+        .filter-header {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        .form-control {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Status Badge */
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-secondary {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Pagination */
         .pagination {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 8px;
-            margin-top: 24px;
-            padding: 20px;
+            margin-top: 25px;
         }
+
         .pagination a,
         .pagination span {
-            padding: 10px 16px;
-            border-radius: 8px;
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
             text-decoration: none;
-            border: 1.5px solid #e0e0e0;
-            background: white;
             color: #333;
-            font-weight: 500;
-            transition: all 0.2s;
+            font-size: 14px;
+            transition: all 0.3s;
         }
+
         .pagination a:hover {
             background: #667eea;
             color: white;
             border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
         }
+
         .pagination .active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             color: white;
             border-color: #667eea;
+            font-weight: 600;
         }
-        .badge {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
+
+        /* Add Button */
+        .add-button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
         }
-        .badge-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .filter-form {
+                grid-template-columns: 1fr;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 800px;
+            }
         }
-        .badge-warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-        .badge-danger {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .text-center { text-align: center; }
-        .text-muted { color: #6c757d; font-style: italic; }
     </style>
 </head>
 <body>
-
 <div class="admin-layout">
-
     <aside class="sidebar">
         <div th:replace="~{admin/sidebar :: sidebar}"></div>
     </aside>
-
     <div class="main">
-
-        <header class="topbar">
-            <div class="topbar-inner">
-                <div class="topbar-left">
-                    <button class="menu-toggle" aria-label="Toggle menu">☰</button>
-                    <h3>Quản lý sản phẩm</h3>
-                </div>
-                <div class="topbar-right">
-                    <div class="user">Admin</div>
-                </div>
-            </div>
-        </header>
-
         <main class="page-content">
+    <div class="container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1>Quản lý sản phẩm</h1>
+            <p>Quản lý toàn bộ sản phẩm giày trong hệ thống</p>
+        </div>
 
-            <!-- Alert messages -->
-            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        <!-- Success/Error Messages -->
+        <div th:if="${successMessage}" class="alert alert-success">
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="close-btn" aria-label="Close" onclick="this.parentElement.remove()">×</button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-error">
+            <span th:text="${errorMessage}"></span>
+            <button type="button" class="close-btn" aria-label="Close" onclick="this.parentElement.remove()">×</button>
+        </div>
 
-            <!-- Toolbar -->
-            <div class="toolbar">
-                <form th:action="@{/admin/products}" method="get" style="width: 100%;">
-                    <div class="search-row">
-                        <input type="text" name="keyword" th:value="${keyword}" 
-                               placeholder="🔍 Tìm theo tên sản phẩm hoặc thương hiệu..." 
-                               class="search-input">
-                        <select name="categoryId" class="filter-select" th:value="${categoryId}">
-                            <option value="">📁 Tất cả danh mục</option>
-                            <option th:each="cat : ${categories}" 
-                                    th:value="${cat.categoryId}" 
-                                    th:text="${cat.name}"
-                                    th:selected="${categoryId != null && categoryId == cat.categoryId}"></option>
-                        </select>
-                        <input type="text" name="brand" th:value="${brand}" 
-                               placeholder="🏷️ Thương hiệu" 
-                               class="filter-select">
-                    </div>
-                    <div class="btn-row">
-                        <button type="submit" class="btn btn-primary">🔍 Tìm kiếm</button>
-                        <a th:href="@{/admin/products}" class="btn" style="background: #e0e0e0;">🔄 Xóa bộ lọc</a>
-                        <a th:href="@{/admin/products/create}" class="btn btn-success">➕ Thêm sản phẩm mới</a>
-                    </div>
-                </form>
-            </div>
+        <!-- Add Product Button -->
+        <div class="add-button-container">
+            <a th:href="@{/admin/products/create}" class="btn btn-primary">+ Thêm sản phẩm mới</a>
+        </div>
 
-            <!-- Table -->
-            <div class="table-wrapper">
-                <table>
-                    <thead>
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-header">Tìm kiếm & Lọc</div>
+            <form th:action="@{/admin/products}" method="get" class="filter-form">
+                <div class="form-group">
+                    <label>Từ khóa</label>
+                    <input type="text" name="keyword" th:value="${keyword}" class="form-control" placeholder="Tên hoặc thương hiệu...">
+                </div>
+
+                <div class="form-group">
+                    <label>Danh mục</label>
+                    <select name="categoryId" class="form-control">
+                        <option value="">Tất cả danh mục</option>
+                        <option th:each="cat : ${categories}" 
+                                th:value="${cat.categoryId}" 
+                                th:text="${cat.name}"
+                                th:selected="${categoryId != null && categoryId == cat.categoryId}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Thương hiệu</label>
+                    <input type="text" name="brand" th:value="${brand}" class="form-control" placeholder="Nhập thương hiệu...">
+                </div>
+
+                <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select name="status" class="form-control">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="true" th:selected="${status != null && status == true}">Đang bán</option>
+                        <option value="false" th:selected="${status != null && status == false}">Ngừng bán</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                    <a th:href="@{/admin/products}" class="btn btn-secondary">Xóa bộ lọc</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Products Table -->
+        <div class="table-container">
+            <table>
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Tên sản phẩm</th>
                         <th>Thương hiệu</th>
                         <th>Danh mục</th>
-                        <th>Giá</th>
+                        <th>Giá bán</th>
                         <th>Trạng thái</th>
-                        <th style="width: 220px;">Thao tác</th>
+                        <th>Thao tác</th>
                     </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:if="${#lists.isEmpty(products)}">
-                        <td colspan="7" class="text-center text-muted">Không có sản phẩm nào</td>
-                    </tr>
-                    <tr th:each="product : ${products}">
-                        <td th:text="${product.shoeId}">1</td>
-                        <td th:text="${product.name}">Nike Air Max</td>
-                        <td th:text="${product.brand}">Nike</td>
-                        <td th:text="${product.categoryName}">Giày thể thao</td>
-                        <td th:text="${#numbers.formatDecimal(product.basePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">1,500,000 đ</td>
+                </thead>
+                <tbody>
+                    <tr th:each="product : ${productsPage.content}">
+                        <td th:text="${product.shoeId}"></td>
+                        <td th:text="${product.name}"></td>
+                        <td th:text="${product.brand}"></td>
+                        <td th:text="${product.categoryName}"></td>
+                        <td th:text="${#numbers.formatDecimal(product.basePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
                         <td>
-                            <span th:class="${product.status == 'ĐANG BÁN' ? 'badge badge-success' : 'badge badge-warning'}"
-                                  th:text="${product.status}">Đang bán</span>
+                            <span th:if="${product.status}" class="badge badge-success">Đang bán</span>
+                            <span th:unless="${product.status}" class="badge badge-secondary">Ngừng bán</span>
                         </td>
                         <td>
-                            <div class="actions-cell">
-                                <a th:href="@{/admin/products/{id}/edit(id=${product.shoeId})}" class="btn btn-primary btn-sm">✏️ Sửa</a>
+                            <div class="action-buttons">
+                                <a th:href="@{/admin/products/{id}(id=${product.shoeId})}" class="btn btn-primary btn-sm">Xem</a>
+                                <a th:href="@{/admin/products/{id}/edit(id=${product.shoeId})}" class="btn btn-secondary btn-sm">Sửa</a>
                                 
-                                <form th:if="${product.status == 'ĐANG BÁN'}" 
-                                      th:action="@{/admin/products/{id}/disable(id=${product.shoeId})}" 
-                                      method="post" 
-                                      onsubmit="return confirm('Bạn có chắc muốn tạm ngừng bán sản phẩm này?');">
-                                    <button type="submit" class="btn btn-warning btn-sm">⏸️ Ngừng bán</button>
-                                </form>
-                                
-                                <form th:action="@{/admin/products/{id}/delete(id=${product.shoeId})}" 
-                                      method="post" 
-                                      onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này? Khách hàng sẽ không thể xem sản phẩm này nữa.');">
-                                    <button type="submit" class="btn btn-danger btn-sm">🗑️ Xóa</button>
+                                <form th:action="@{/admin/products/{id}/toggle-status(id=${product.shoeId})}" method="post" style="display: inline;">
+                                    <button type="submit" th:classappend="${product.status} ? 'btn-warning' : 'btn-success'" class="btn btn-sm">
+                                        <span th:if="${product.status}">Ngừng bán</span>
+                                        <span th:unless="${product.status}">Kích hoạt</span>
+                                    </button>
                                 </form>
                             </div>
                         </td>
                     </tr>
-                    </tbody>
-                </table>
-            </div>
+                </tbody>
+            </table>
+        </div>
 
-            <!-- Pagination -->
-            <div th:if="${totalPages > 0}" class="pagination">
-                <a th:if="${currentPage > 1}" 
-                   th:href="@{/admin/products(page=${currentPage - 1}, keyword=${keyword}, categoryId=${categoryId}, brand=${brand}, status=${status})}">
-                    ◀ Trước
+        <!-- Pagination -->
+        <div class="pagination" th:if="${productsPage.totalPages > 1}">
+            <a th:if="${currentPage > 1}" 
+               th:href="@{/admin/products(page=${currentPage - 1}, size=10, keyword=${keyword}, categoryId=${categoryId}, brand=${brand}, status=${status})}">
+                ← Trước
+            </a>
+
+            <th:block th:each="i : ${#numbers.sequence(1, productsPage.totalPages)}">
+                <a th:if="${i != currentPage}" 
+                   th:href="@{/admin/products(page=${i}, size=10, keyword=${keyword}, categoryId=${categoryId}, brand=${brand}, status=${status})}" 
+                   th:text="${i}">
                 </a>
-                
-                <span th:each="i : ${#numbers.sequence(1, totalPages)}"
-                      th:class="${i == currentPage ? 'active' : ''}">
-                    <a th:if="${i != currentPage}"
-                       th:href="@{/admin/products(page=${i}, keyword=${keyword}, categoryId=${categoryId}, brand=${brand}, status=${status})}"
-                       th:text="${i}">1</a>
-                    <span th:if="${i == currentPage}" th:text="${i}">1</span>
-                </span>
-                
-                <a th:if="${currentPage < totalPages}" 
-                   th:href="@{/admin/products(page=${currentPage + 1}, keyword=${keyword}, categoryId=${categoryId}, brand=${brand}, status=${status})}">
-                    Sau ▶
-                </a>
-            </div>
+                <span th:if="${i == currentPage}" class="active" th:text="${i}"></span>
+            </th:block>
 
-        </main>
-
+            <a th:if="${currentPage < productsPage.totalPages}" 
+               th:href="@{/admin/products(page=${currentPage + 1}, size=10, keyword=${keyword}, categoryId=${categoryId}, brand=${brand}, status=${status})}">
+                Sau →
+            </a>
+        </div>
     </div>
-
+        </main>
+    </div>
 </div>
 
 <script>
@@ -373,122 +453,16 @@
             sidebar.classList.toggle('collapsed');
         }
     });
+
+    // Auto-hide alerts after 4 seconds
+    window.addEventListener('DOMContentLoaded', () => {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.remove();
+            }, 4000);
+        });
+    });
 </script>
-
-</body>
-</html>
-            margin-top: 15px;
-        }
-
-        .pagination a {
-            margin-right: 10px;
-            text-decoration: none;
-        }
-
-        .pagination span {
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-
-<h2>Quản lý sản phẩm</h2>
-
-<!-- THANH CÔNG CỤ -->
-<div class="toolbar">
-    <!-- FORM TÌM KIẾM -->
-    <form method="get" th:action="@{/admin/products}">
-        <input type="text"
-               name="keyword"
-               placeholder="Nhập tên sản phẩm cần tìm..."
-               th:value="${keyword}" />
-
-        <button type="submit">Tìm kiếm</button>
-    </form>
-
-    <a th:href="@{/admin/products/create}">
-        ➕ Thêm sản phẩm mới
-    </a>
-</div>
-
-<!-- BẢNG DANH SÁCH SẢN PHẨM -->
-<table>
-    <thead>
-    <tr>
-        <th>Mã sản phẩm</th>
-        <th>Tên sản phẩm</th>
-        <th>Thương hiệu</th>
-        <th>Danh mục</th>
-        <th>Giá bán</th>
-        <th>Trạng thái</th>
-        <th>Thao tác</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    <!-- KHÔNG CÓ SẢN PHẨM -->
-    <tr th:if="${products == null || products.isEmpty()}">
-        <td colspan="7" style="text-align: center;">
-            Không tìm thấy sản phẩm phù hợp
-        </td>
-    </tr>
-
-    <!-- DANH SÁCH SẢN PHẨM -->
-    <tr th:each="p : ${products}">
-        <td th:text="${p.id}"></td>
-        <td th:text="${p.name}"></td>
-        <td th:text="${p.brand}"></td>
-        <td th:text="${p.categoryName}"></td>
-        <td th:text="${#numbers.formatDecimal(p.basePrice, 0, 'POINT', 0, 'COMMA')} + ' VNĐ'"></td>
-        <td th:text="${p.status}"></td>
-
-        <td class="actions">
-            <a th:href="@{/admin/products/{id}/edit(id=${p.id})}">
-                Sửa
-            </a>
-
-            |
-            <form th:action="@{/admin/products/{id}/disable(id=${p.id})}"
-                  method="post"
-                  style="display:inline;">
-                <button type="submit"
-                        onclick="return confirm('Bạn có chắc chắn muốn ngừng bán sản phẩm này không?')">
-                    Ngừng bán
-                </button>
-            </form>
-
-            |
-            <form th:action="@{/admin/products/{id}/delete(id=${p.id})}"
-                  method="post"
-                  style="display:inline;">
-                <button type="submit"
-                        onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')">
-                    Xóa
-                </button>
-            </form>
-        </td>
-    </tr>
-    </tbody>
-</table>
-
-<!-- PHÂN TRANG -->
-<div class="pagination">
-    <a th:if="${currentPage > 1}"
-       th:href="@{/admin/products(page=${currentPage - 1}, keyword=${keyword})}">
-        ⬅ Trang trước
-    </a>
-
-    <span>
-        Trang <span th:text="${currentPage}"></span>
-        /
-        <span th:text="${totalPages}"></span>
-    </span>
-
-    <a th:if="${currentPage < totalPages}"
-       th:href="@{/admin/products(page=${currentPage + 1}, keyword=${keyword})}">
-        Trang sau ➡
-    </a>
-</div>
-
 </body>
 </html>

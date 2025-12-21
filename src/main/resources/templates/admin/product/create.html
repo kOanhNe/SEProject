@@ -43,7 +43,7 @@
             border-radius: 6px;
             margin-bottom: 8px;
         }
-        .image-item input, .variant-item input, .variant-item select {
+        .image-item input[type="text"], .variant-item input, .variant-item select {
             flex: 1;
         }
         .btn-remove {
@@ -83,6 +83,16 @@
         label.required::after {
             content: " *";
             color: var(--danger);
+        }
+        .upload-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .upload-status {
+            font-size: 12px;
+            color: #555;
+            min-width: 110px;
         }
     </style>
 </head>
@@ -179,6 +189,11 @@
                                 <input type="checkbox" name="images[0].isThumbnail" value="true">
                                 Ảnh đại diện
                             </label>
+                            <div class="upload-controls">
+                                <input type="file" accept="image/*" onchange="handleFileChosen(this)">
+                                <button type="button" class="btn" onclick="uploadImage(this)">Upload</button>
+                                <span class="upload-status"></span>
+                            </div>
                             <button type="button" class="btn-remove" onclick="removeImage(this)">Xóa</button>
                         </div>
                     </div>
@@ -201,16 +216,18 @@
                             </select>
                             <select name="variants[0].size" required>
                                 <option value="">-- Chọn size --</option>
-                                <option value="36">36</option>
-                                <option value="37">37</option>
-                                <option value="38">38</option>
-                                <option value="39">39</option>
-                                <option value="40">40</option>
-                                <option value="41">41</option>
-                                <option value="42">42</option>
-                                <option value="43">43</option>
+                                <option value="SIZE_35">35</option>
+                                <option value="SIZE_36">36</option>
+                                <option value="SIZE_37">37</option>
+                                <option value="SIZE_38">38</option>
+                                <option value="SIZE_39">39</option>
+                                <option value="SIZE_40">40</option>
+                                <option value="SIZE_41">41</option>
+                                <option value="SIZE_42">42</option>
+                                <option value="SIZE_43">43</option>
+                                <option value="SIZE_44">44</option>
+                                <option value="SIZE_45">45</option>
                             </select>
-                            <input type="number" name="variants[0].stock" placeholder="Số lượng" min="0" required>
                             <button type="button" class="btn-remove" onclick="removeVariant(this)">Xóa</button>
                         </div>
                     </div>
@@ -244,6 +261,11 @@
                 <input type="checkbox" name="images[${imageIndex}].isThumbnail" value="true">
                 Ảnh đại diện
             </label>
+            <div class="upload-controls">
+                <input type="file" accept="image/*" onchange="handleFileChosen(this)">
+                <button type="button" class="btn" onclick="uploadImage(this)">Upload</button>
+                <span class="upload-status"></span>
+            </div>
             <button type="button" class="btn-remove" onclick="removeImage(this)">Xóa</button>
         `;
         list.appendChild(div);
@@ -252,11 +274,7 @@
 
     function removeImage(btn) {
         const list = document.getElementById('imageList');
-        if (list.children.length > 1) {
-            btn.parentElement.remove();
-        } else {
-            alert('Phải có ít nhất 1 hình ảnh');
-        }
+        btn.parentElement.remove();
     }
 
     function addVariant() {
@@ -276,29 +294,39 @@
             </select>
             <select name="variants[${variantIndex}].size" required>
                 <option value="">-- Chọn size --</option>
-                <option value="36">36</option>
-                <option value="37">37</option>
-                <option value="38">38</option>
-                <option value="39">39</option>
-                <option value="40">40</option>
-                <option value="41">41</option>
-                <option value="42">42</option>
-                <option value="43">43</option>
+                ${['SIZE_35','SIZE_36','SIZE_37','SIZE_38','SIZE_39','SIZE_40','SIZE_41','SIZE_42','SIZE_43','SIZE_44','SIZE_45']
+                  .map(v => `<option value="${v}">${v.replace('SIZE_','')}</option>`).join('')}
             </select>
-            <input type="number" name="variants[${variantIndex}].stock" placeholder="Số lượng" min="0" required>
             <button type="button" class="btn-remove" onclick="removeVariant(this)">Xóa</button>
         `;
         list.appendChild(div);
         variantIndex++;
+        reindexVariants();
     }
 
     function removeVariant(btn) {
         const list = document.getElementById('variantList');
         if (list.children.length > 1) {
             btn.parentElement.remove();
+            reindexVariants();
         } else {
             alert('Phải có ít nhất 1 biến thể');
         }
+    }
+
+    function reindexVariants() {
+        const list = document.getElementById('variantList');
+        Array.from(list.children).forEach((item, idx) => {
+            const selects = item.querySelectorAll('select');
+            selects.forEach(sel => {
+                if (sel.name.includes('.color')) {
+                    sel.name = `variants[${idx}].color`;
+                } else if (sel.name.includes('.size')) {
+                    sel.name = `variants[${idx}].size`;
+                }
+            });
+        });
+        variantIndex = list.children.length;
     }
 
     // Toggle sidebar
@@ -307,6 +335,65 @@
         const sidebar = document.querySelector('.sidebar');
         if (sidebar) {
             sidebar.classList.toggle('collapsed');
+        }
+    });
+
+    function handleFileChosen(input) {
+        const status = input.closest('.image-item').querySelector('.upload-status');
+        if (status) status.textContent = input.files && input.files[0] ? input.files[0].name : '';
+    }
+
+    async function uploadImage(btn) {
+        const container = btn.closest('.image-item');
+        const fileInput = container.querySelector('input[type="file"]');
+        const urlInput = container.querySelector('input[type="text"][name*="images"][name$=".url"]');
+        const status = container.querySelector('.upload-status');
+
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            alert('Vui lòng chọn file ảnh');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        btn.disabled = true;
+        if (status) status.textContent = 'Đang upload...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const resp = await fetch('/admin/uploads/images', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                throw new Error(data.error || 'Upload thất bại');
+            }
+            urlInput.value = data.url;
+            if (status) status.textContent = 'Đã nhận URL';
+        } catch (err) {
+            alert(err.message);
+            if (status) status.textContent = 'Lỗi upload';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // Trước khi submit: bỏ các item ảnh không có URL, và đảm bảo còn ít nhất 1 ảnh hợp lệ
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const list = document.getElementById('imageList');
+        const items = Array.from(list.querySelectorAll('.image-item'));
+        items.forEach(item => {
+            const urlInput = item.querySelector('input[type="text"][name*="images"][name$=".url"]');
+            if (!urlInput || !urlInput.value.trim()) {
+                item.remove();
+            }
+        });
+        const remaining = list.querySelectorAll('.image-item');
+        if (remaining.length === 0) {
+            e.preventDefault();
+            alert('Vui lòng upload ít nhất 1 hình ảnh hợp lệ');
         }
     });
 </script>

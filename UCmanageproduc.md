@@ -1,164 +1,94 @@
-# Use Case [23]: Manage Product
+# Use Case [23]: Quản lý sản phẩm (Admin)
 
 ## Actor(s)
 - **ADMIN**
 
 ## Trigger
-Admin truy cập vào mục **“Quản lý sản phẩm”** trong trang quản trị.
+- Admin truy cập mục **Quản lý sản phẩm** trên trang quản trị.
 
 ## Description
-Use Case này cho phép Admin thực hiện các chức năng quản lý sản phẩm giày trong hệ thống, bao gồm:
-- Xem danh sách sản phẩm theo phân trang
-- Tìm kiếm và lọc sản phẩm
-- Thêm mới, chỉnh sửa, xóa hoặc tạm ngừng kinh doanh sản phẩm
+Admin quản lý danh sách sản phẩm giày: xem/lọc/tìm kiếm, xem chi tiết, tạo mới, chỉnh sửa và bật/tắt trạng thái bán. Admin **không thao tác tồn kho**; tồn kho được xử lý bởi module khác. Không hỗ trợ xóa sản phẩm.
 
-Admin có thể cập nhật các thông tin:
-- Tên sản phẩm, mã sản phẩm
-- Hình ảnh sản phẩm
-- Biến thể (màu – size)
-- Giá cơ bản
-- Danh mục, thương hiệu
-- Loại giày (Nam, Nữ, Unisex)
-- Mô tả sản phẩm
+Thông tin sản phẩm có thể cập nhật:
+- Tên sản phẩm, thương hiệu, loại giày (Nam/Nữ/Unisex)
+- Giá cơ bản, mô tả, bộ sưu tập (collection)
+- Danh mục
+- Hình ảnh (chọn ảnh thumbnail)
+- Biến thể màu – size (mỗi cặp màu-size duy nhất)
 
 ## Pre-Conditions
-- Admin đã đăng nhập vào hệ thống
-- Admin có quyền truy cập chức năng quản lý sản phẩm
+- Admin đã đăng nhập và có quyền quản trị sản phẩm.
+- Danh mục đã được cấu hình sẵn.
 
 ## Post-Conditions
-- Thông tin sản phẩm, hình ảnh, biến thể hoặc trạng thái bán được cập nhật vào cơ sở dữ liệu
-- Danh sách sản phẩm hiển thị dữ liệu mới sau khi cập nhật
+- Thông tin sản phẩm, hình ảnh, biến thể hoặc trạng thái bán được lưu vào cơ sở dữ liệu.
+- Danh sách sản phẩm phản ánh dữ liệu mới sau thao tác.
 
 ---
 
 ## Main Flow
 
-### 1. Truy cập danh sách sản phẩm
-1. Actor truy cập trang **“Quản lý sản phẩm”**  
-2. Hệ thống hiển thị danh sách sản phẩm giày theo phân trang mặc định  
-3. Danh sách bao gồm các thông tin:
-   - Tên sản phẩm
-   - Mã sản phẩm
-   - Thương hiệu
-   - Danh mục
-   - Giá
-   - Trạng thái bán
+### 1. Xem danh sách sản phẩm
+1. Actor mở trang **Quản lý sản phẩm**.
+2. Hệ thống hiển thị danh sách theo phân trang (mặc định sắp xếp mới nhất theo `shoeId` giảm dần).
+3. Mỗi dòng hiển thị: Tên, Thương hiệu, Danh mục, Giá cơ bản, Trạng thái bán.
 
----
+### 1.A. Phân trang
+1. Hệ thống hiển thị điều khiển trang trước/sau, nhập số trang, chọn số bản ghi/trang.
+2. Admin chọn trang khác.
+3. Hệ thống truy vấn và trả về danh sách của trang đã chọn; UI cập nhật kết quả.
 
-### 1.A. Phân trang danh sách sản phẩm
-1. Hệ thống hiển thị bộ phân trang gồm:
-   - Trang trước
-   - Trang sau
-   - Nhập số trang
-   - Chọn số sản phẩm/trang
-2. Admin chọn chuyển sang trang khác  
-3. Hệ thống gửi yêu cầu truy vấn trang mới  
-4. Hệ thống xử lý và trả về danh sách sản phẩm tương ứng  
-5. UI cập nhật danh sách sản phẩm theo trang đã chọn  
+### 1.B. Tìm kiếm & Lọc
+1. Admin nhập từ khóa (tên/brand) và tùy chọn chọn bộ lọc: Danh mục, Thương hiệu, Trạng thái (Đang bán/Ngừng bán).
+2. Admin nhấn **Tìm kiếm**.
+3. Hệ thống trả về danh sách sản phẩm thỏa điều kiện; có thể rỗng nếu không khớp.
 
----
+### 1.C. Xem chi tiết (read-only)
+1. Admin chọn một sản phẩm trong danh sách.
+2. Hệ thống hiển thị chi tiết: thông tin chung, danh mục, giá, mô tả, hình ảnh (thumbnail), biến thể màu-size.
+3. Tồn kho không hiển thị và không cho chỉnh sửa trong màn này.
 
-### 2.A. Tìm kiếm và lọc sản phẩm
-1. Admin nhập từ khóa vào ô tìm kiếm  
-2. (Tùy chọn) Admin chọn thêm bộ lọc:
-   - Danh mục
-   - Thương hiệu
-   - Trạng thái sản phẩm
-   - Khoảng giá
-3. Admin nhấn **“Tìm kiếm”**  
-4. Hệ thống xử lý và hiển thị danh sách sản phẩm phù hợp  
-5. Admin chọn sản phẩm để:
-   - Xem chi tiết
-   - Chỉnh sửa
-   - Tạm ngừng bán
-   - Xóa  
+### 2. Thêm sản phẩm mới
+1. Admin chọn **Thêm sản phẩm mới**.
+2. Admin nhập thông tin bắt buộc: Tên, Thương hiệu, Loại giày, Giá > 0, Danh mục. Có thể thêm mô tả, bộ sưu tập.
+3. Admin thêm hình ảnh (đánh dấu 1 ảnh thumbnail) và các biến thể màu-size (mỗi cặp màu-size duy nhất). Có 2 cách thêm ảnh:
+	- Dán URL ảnh công khai, hoặc
+	- Chọn file ảnh → hệ thống upload lên Cloudinary (folder `shoe_store_product`) và tự điền URL trả về.
+4. Hệ thống kiểm tra: trường bắt buộc, giá hợp lệ, danh mục tồn tại, không trùng biến thể.
+5. Nếu hợp lệ, hệ thống lưu sản phẩm với trạng thái **Đang bán**; tồn kho của biến thể mặc định 0 và không cho nhập. Ảnh được lưu bằng URL trong bảng `shoes_image`.
+6. Hệ thống hiển thị thông báo thành công và quay lại danh sách.
 
----
+### 3. Chỉnh sửa sản phẩm
+1. Admin mở sản phẩm cần chỉnh sửa.
+2. Admin cập nhật các trường: Tên, Thương hiệu, Loại giày, Giá, Mô tả, Bộ sưu tập, Danh mục; thêm/xóa/sửa hình ảnh (giữ `imageId` cho ảnh cũ, có thể upload file mới lên Cloudinary hoặc dán URL); thêm/xóa/sửa biến thể màu-size (giữ `variantId` cho biến thể cũ).
+3. Hệ thống kiểm tra như bước 2.4 và đảm bảo không trùng biến thể.
+4. Tồn kho biến thể được giữ nguyên, không hiển thị để chỉnh sửa.
+5. Nếu hợp lệ, hệ thống lưu và báo thành công rồi quay về danh sách.
 
-### 2.B. Thêm sản phẩm mới
-1. Admin chọn **“Thêm sản phẩm mới”**  
-2. Admin nhập các thông tin:
-   - Tên sản phẩm
-   - Thương hiệu
-   - Danh mục
-   - Giá cơ bản
-   - Mô tả
-   - Loại giày
-   - Hình ảnh sản phẩm
-   - Các biến thể màu – size
-3. Hệ thống kiểm tra dữ liệu:
-   - Các trường bắt buộc không được để trống
-   - SKU không được trùng lặp
-   - Biến thể màu – size phải là duy nhất trong cùng sản phẩm
-4. Nếu hợp lệ, hệ thống lưu dữ liệu và hiển thị:
-   > “Thêm sản phẩm thành công”
-
----
-
-### 2.C. Chỉnh sửa thông tin sản phẩm
-1. Admin chọn sản phẩm và nhấn **“Chỉnh sửa”**  
-2. Admin cập nhật:
-   - Giá, mô tả
-   - Loại giày
-   - Hình ảnh
-   - Thêm / xóa / chỉnh sửa biến thể màu – size
-   - Danh mục, thương hiệu
-3. Hệ thống kiểm tra tính hợp lệ  
-4. Hệ thống cập nhật và hiển thị thông báo thành công  
-
----
-
-### 2.D. Tạm ngừng bán sản phẩm
-1. Admin chọn sản phẩm và nhấn **“Tạm ngừng bán”**  
-2. Hệ thống hiển thị hộp thoại xác nhận  
-   > “Bạn có chắc chắn muốn ngừng kinh doanh sản phẩm này không?”
-3. Admin nhấn **“Xác nhận”**  
-4. Hệ thống cập nhật trạng thái thành **“Ngừng bán”** và hiển thị thông báo  
-
----
-
-### 2.E. Xóa sản phẩm
-1. Admin chọn sản phẩm và nhấn **“Xóa”**  
-2. Hệ thống hiển thị hộp thoại xác nhận  
-   > “Bạn có chắc chắn muốn xóa sản phẩm này không?”
-3. Admin nhấn **“Xác nhận”**  
-4. Hệ thống thực hiện **xóa mềm (soft delete)** và ẩn sản phẩm khỏi hệ thống  
+### 4. Bật/Tắt trạng thái bán
+1. Tại danh sách, Admin nhấn nút **Bật/Tắt** trạng thái của sản phẩm.
+2. Hệ thống đảo trạng thái: Đang bán ↔ Ngừng bán, lưu kết quả và hiển thị thông báo.
 
 ---
 
 ## Alternate Flow
 
-### AF1. Xóa sản phẩm đã nằm trong đơn hàng đã giao
-- Nếu sản phẩm đã xuất hiện trong đơn hàng đã hoàn thành  
-- Hệ thống vẫn cho phép xóa mềm  
-- Hiển thị thông báo:
-  > “Sản phẩm đã được xóa khỏi hệ thống. Khách hàng sẽ không thể xem sản phẩm này nữa.”
+### AF1. Yêu cầu trang vượt giới hạn
+- Nếu Admin nhập trang > tổng số trang, hệ thống chuyển về trang hợp lệ gần nhất (trang cuối) và hiển thị danh sách tương ứng.
 
-### AF2. Chuyển trang vượt quá số trang hiện có
-- Nếu Admin yêu cầu trang lớn hơn tổng số trang:
-  - Hệ thống hiển thị:
-    > “Không có sản phẩm trong trang này. Vui lòng chọn trang khác.”
-  - Hệ thống tự động chuyển về trang hợp lệ gần nhất (ví dụ: trang cuối)
+### AF2. Không có kết quả tìm kiếm
+- Khi bộ lọc/từ khóa không khớp sản phẩm nào, hệ thống trả về danh sách rỗng; Admin có thể điều chỉnh điều kiện và tìm lại.
+
+### AF3. Sản phẩm không tồn tại khi xem/sửa/đổi trạng thái
+- Hệ thống thông báo lỗi "Không tìm thấy sản phẩm" và chuyển về danh sách.
 
 ---
 
 ## Exception Flow
 
-### EF1. Không tìm thấy sản phẩm
-- Tại bước **2.A.4**
-- Hệ thống hiển thị:
-  > “Không tìm thấy sản phẩm phù hợp”
+### EF1. Dữ liệu không hợp lệ khi thêm/chỉnh sửa
+- Thiếu trường bắt buộc, giá ≤ 0, màu/size trống hoặc trùng lặp.
+- Hệ thống giữ nguyên form, đánh dấu lỗi và yêu cầu nhập lại.
 
-### EF2. Sai dữ liệu khi thêm hoặc chỉnh sửa
-- Tại bước **2.B.3** hoặc **2.C.3**
-- Nếu thiếu thông tin hoặc sai định dạng:
-  - Hệ thống đánh dấu đỏ các trường lỗi
-  - Yêu cầu Admin nhập lại
-
-### EF3. Không thể xóa sản phẩm do đang được sử dụng
-- Nếu sản phẩm đang nằm trong:
-  - Giỏ hàng
-  - Đơn hàng đang xử lý / đang giao
-- Hệ thống hiển thị:
-  > “Không thể xóa sản phẩm do đang được sử dụng. Vui lòng chọn chức năng ‘Tạm ngừng bán’.”
+### EF2. Lỗi lưu dữ liệu
+- Khi có lỗi hệ thống khác, hệ thống hiển thị thông báo chung và không lưu thay đổi.

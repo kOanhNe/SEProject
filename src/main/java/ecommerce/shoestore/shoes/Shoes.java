@@ -46,9 +46,13 @@ public class Shoes {
     @JoinColumn(name = "\"categoryId\"")
     private Category category;
 
-    @OneToMany(mappedBy = "shoes", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
+    private Boolean status = true; // true = ĐANG BÁN, false = NGỪNG BÁN
+
+    @OneToMany(mappedBy = "shoes", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ShoesImage> images;
 
-    @OneToMany(mappedBy = "shoes", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "shoes", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ShoesVariant> variants;
 }

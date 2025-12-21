@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.util.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,21 @@ public class AdminProductService {
     private final ShoesRepository shoesRepository;
     private final CategoryRepository categoryRepository;
 
+    private String normalizeSize(String raw) {
+        if (raw == null) return null;
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) return null;
+        if (trimmed.toUpperCase().startsWith("SIZE_")) {
+            return trimmed.toUpperCase();
+        }
+        // Nếu chỉ nhập số, chuẩn hóa thành SIZE_<num>
+        String digits = trimmed.replaceAll("[^0-9]", "");
+        if (!digits.isEmpty()) {
+            return "SIZE_" + digits;
+        }
+        return trimmed.toUpperCase();
+    }
+
     /* =========================
        ADMIN – LIST PRODUCT
        ========================= */
@@ -47,43 +63,34 @@ public class AdminProductService {
             String status
     ) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("shoeId").descending());
+        Boolean statusFilter = (status == null || status.isBlank()) ? null : Boolean.valueOf(status);
 
-        // ✅ SỬ DỤNG QUERY TÌM KIẾM CƠ BẢN (không cần deleted/status)
         Page<Shoes> shoesPage = shoesRepository.searchForAdminBasic(
                 keyword,
                 categoryId,
                 brand,
+                statusFilter,
                 pageable
         );
 
-        return shoesPage.map(shoes ->
-                new AdminShoesListItemDto(
-                        shoes.getShoeId(),
-                        shoes.getName(),
-                        shoes.getBrand(),
-                        shoes.getCategory() != null
-                                ? shoes.getCategory().getName()
-                                : null,
-                        shoes.getBasePrice(),
-                        "ĐANG BÁN" // TODO: Thay bằng shoes.getStatus() khi DB có column
-                )
-        );
+        return shoesPage.map(shoes -> AdminShoesListItemDto.builder()
+                .shoeId(shoes.getShoeId())
+                .name(shoes.getName())
+                .brand(shoes.getBrand())
+                .categoryName(shoes.getCategory() != null ? shoes.getCategory().getName() : null)
+                .basePrice(shoes.getBasePrice())
+                .status(shoes.getStatus() != null ? shoes.getStatus() : Boolean.FALSE)
+                .build());
     }
 
     /* =========================
-       ADMIN – GET DETAIL FOR EDIT
+       ADMIN – GET DETAIL FOR EDIT/VIEW
        ========================= */
     @Transactional(readOnly = true)
     public AdminShoesDetailDto getAdminShoesDetail(Long shoeId) {
-        // TODO: Uncomment khi DB có column deleted
-        /*
         Shoes shoes = shoesRepository.findByIdForAdmin(shoeId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm ID: " + shoeId));
-        */
-        
-        // TẠM THỜI dùng findById
-        Shoes shoes = shoesRepository.findById(shoeId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm ID: " + shoeId));
+                .orElseGet(() -> shoesRepository.findById(shoeId)
+                        .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm ID: " + shoeId)));
 
         List<AdminShoesDetailDto.ImageDto> imageDtos = shoes.getImages() != null
                 ? shoes.getImages().stream()
@@ -101,7 +108,6 @@ public class AdminProductService {
                         .variantId(v.getVariantId())
                         .color(v.getColor())
                         .size(v.getSize())
-                        .stock(v.getStock())
                         .build())
                 .collect(Collectors.toList())
                 : new ArrayList<>();
@@ -116,8 +122,7 @@ public class AdminProductService {
                 .collection(shoes.getCollection())
                 .categoryId(shoes.getCategory() != null ? shoes.getCategory().getCategoryId() : null)
                 .categoryName(shoes.getCategory() != null ? shoes.getCategory().getName() : null)
-                .status("ĐANG BÁN") // TODO: shoes.getStatus() khi DB có column status
-                .deleted(false) // TODO: shoes.isDeleted() khi DB có column deleted
+                .status(shoes.getStatus())
                 .images(imageDtos)
                 .variants(variantDtos)
                 .build();
@@ -128,11 +133,9 @@ public class AdminProductService {
        ========================= */
     @Transactional
     public Long createShoes(CreateShoesRequest request) {
-        // Validate category exists
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy danh mục ID: " + request.getCategoryId()));
 
-        // Create Shoes entity
         Shoes shoes = Shoes.builder()
                 .name(request.getName())
                 .brand(request.getBrand())
@@ -141,18 +144,17 @@ public class AdminProductService {
                 .description(request.getDescription())
                 .collection(request.getCollection())
                 .category(category)
-                // TODO: Uncomment khi DB có columns deleted, status
-                // .deleted(false)
-                // .status("ĐANG BÁN")
+                .status(Boolean.TRUE)
                 .build();
 
-        // Save shoes first to get ID
         shoes = shoesRepository.save(shoes);
 
-        // Create images
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             Set<ShoesImage> images = new HashSet<>();
             for (CreateShoesRequest.ImageDto imgDto : request.getImages()) {
+                if (imgDto == null || !StringUtils.hasText(imgDto.getUrl())) {
+                    continue; // bỏ qua ảnh không có URL
+                }
                 ShoesImage image = ShoesImage.builder()
                         .url(imgDto.getUrl())
                         .isThumbnail(imgDto.isThumbnail())
@@ -163,11 +165,27 @@ public class AdminProductService {
             shoes.setImages(images);
         }
 
-        // Create variants
         if (request.getVariants() != null && !request.getVariants().isEmpty()) {
-            // Validate unique color-size combinations
-            Set<String> variantKeys = new HashSet<>();
+            List<CreateShoesRequest.VariantDto> validVariants = new ArrayList<>();
+
             for (CreateShoesRequest.VariantDto vDto : request.getVariants()) {
+                if (vDto == null) {
+                    continue;
+                }
+                String normSize = normalizeSize(vDto.getSize());
+                if (!StringUtils.hasText(vDto.getColor()) || !StringUtils.hasText(normSize)) {
+                    continue; // bỏ qua biến thể trống hoặc thiếu dữ liệu
+                }
+                vDto.setSize(normSize); // giữ kích thước đã chuẩn hóa cho các bước sau
+                validVariants.add(vDto);
+            }
+
+            if (validVariants.isEmpty()) {
+                throw new IllegalArgumentException("Vui lòng nhập ít nhất 1 biến thể hợp lệ (màu và size)");
+            }
+
+            Set<String> variantKeys = new HashSet<>();
+            for (CreateShoesRequest.VariantDto vDto : validVariants) {
                 String key = vDto.getColor() + "-" + vDto.getSize();
                 if (!variantKeys.add(key)) {
                     throw new IllegalArgumentException("Biến thể " + key + " bị trùng lặp");
@@ -175,11 +193,11 @@ public class AdminProductService {
             }
 
             Set<ShoesVariant> variants = new HashSet<>();
-            for (CreateShoesRequest.VariantDto vDto : request.getVariants()) {
+            for (CreateShoesRequest.VariantDto vDto : validVariants) {
                 ShoesVariant variant = ShoesVariant.builder()
                         .color(vDto.getColor())
                         .size(vDto.getSize())
-                        .stock(vDto.getStock())
+                        .stock(0) // quản lý tồn kho tách riêng, mặc định 0
                         .shoes(shoes)
                         .build();
                 variants.add(variant);
@@ -197,21 +215,12 @@ public class AdminProductService {
        ========================= */
     @Transactional
     public void updateShoes(Long shoeId, UpdateShoesRequest request) {
-        // TODO: Uncomment khi DB có column deleted
-        /*
-        Shoes shoes = shoesRepository.findByIdForAdmin(shoeId)
-                .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm ID: " + shoeId));
-        */
-        
-        // TẠM THỜI dùng findById
         Shoes shoes = shoesRepository.findById(shoeId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm ID: " + shoeId));
 
-        // Validate category exists
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy danh mục ID: " + request.getCategoryId()));
 
-        // Update basic info
         shoes.setName(request.getName());
         shoes.setBrand(request.getBrand());
         shoes.setType(request.getType());
@@ -220,68 +229,81 @@ public class AdminProductService {
         shoes.setCollection(request.getCollection());
         shoes.setCategory(category);
 
-        // Update images
         if (request.getImages() != null) {
-            // Clear existing images
-            if (shoes.getImages() != null) {
-                shoes.getImages().clear();
-            }
-
             Set<ShoesImage> newImages = new HashSet<>();
             for (UpdateShoesRequest.ImageDto imgDto : request.getImages()) {
-                ShoesImage image;
-                if (imgDto.getImageId() != null) {
-                    // Existing image - update it
-                    image = shoes.getImages().stream()
-                            .filter(img -> img.getImageId().equals(imgDto.getImageId()))
-                            .findFirst()
-                            .orElseGet(() -> ShoesImage.builder().shoes(shoes).build());
-                } else {
-                    // New image
-                    image = ShoesImage.builder().shoes(shoes).build();
+                if (imgDto == null || !StringUtils.hasText(imgDto.getUrl())) {
+                    continue; // bỏ qua ảnh không có URL
                 }
-                image.setUrl(imgDto.getUrl());
-                image.setThumbnail(imgDto.isThumbnail());
+                ShoesImage image = ShoesImage.builder()
+                        .imageId(imgDto.getImageId())
+                        .url(imgDto.getUrl())
+                        .isThumbnail(imgDto.isThumbnail())
+                        .shoes(shoes)
+                        .build();
                 newImages.add(image);
             }
-            shoes.setImages(newImages);
+            if (shoes.getImages() == null) {
+                shoes.setImages(new HashSet<>());
+            }
+            shoes.getImages().clear();
+            shoes.getImages().addAll(newImages);
         }
 
-        // Update variants
         if (request.getVariants() != null) {
-            // Validate unique color-size combinations
-            Set<String> variantKeys = new HashSet<>();
+            List<UpdateShoesRequest.VariantDto> validVariants = new ArrayList<>();
+
             for (UpdateShoesRequest.VariantDto vDto : request.getVariants()) {
+                if (vDto == null) {
+                    continue;
+                }
+                String normSize = normalizeSize(vDto.getSize());
+                if (!StringUtils.hasText(vDto.getColor()) || !StringUtils.hasText(normSize)) {
+                    continue; // bỏ biến thể thiếu màu hoặc size
+                }
+                vDto.setSize(normSize);
+                validVariants.add(vDto);
+            }
+
+            if (validVariants.isEmpty()) {
+                throw new IllegalArgumentException("Vui lòng nhập ít nhất 1 biến thể hợp lệ (màu và size)");
+            }
+
+            Set<String> variantKeys = new HashSet<>();
+            for (UpdateShoesRequest.VariantDto vDto : validVariants) {
                 String key = vDto.getColor() + "-" + vDto.getSize();
                 if (!variantKeys.add(key)) {
                     throw new IllegalArgumentException("Biến thể " + key + " bị trùng lặp");
                 }
             }
 
-            // Clear existing variants
-            if (shoes.getVariants() != null) {
-                shoes.getVariants().clear();
-            }
+            // Giữ stock cũ nếu có, default 0 cho biến thể mới
+            var oldVariants = shoes.getVariants() != null
+                    ? shoes.getVariants().stream()
+                        .filter(v -> v.getVariantId() != null)
+                        .collect(Collectors.toMap(ShoesVariant::getVariantId, v -> v))
+                    : java.util.Collections.<Long, ShoesVariant>emptyMap();
 
             Set<ShoesVariant> newVariants = new HashSet<>();
-            for (UpdateShoesRequest.VariantDto vDto : request.getVariants()) {
-                ShoesVariant variant;
-                if (vDto.getVariantId() != null) {
-                    // Existing variant - update it
-                    variant = shoes.getVariants().stream()
-                            .filter(v -> v.getVariantId().equals(vDto.getVariantId()))
-                            .findFirst()
-                            .orElseGet(() -> ShoesVariant.builder().shoes(shoes).build());
-                } else {
-                    // New variant
-                    variant = ShoesVariant.builder().shoes(shoes).build();
+            for (UpdateShoesRequest.VariantDto vDto : validVariants) {
+                Integer stockVal = 0;
+                if (vDto.getVariantId() != null && oldVariants.containsKey(vDto.getVariantId())) {
+                    stockVal = oldVariants.get(vDto.getVariantId()).getStock();
                 }
-                variant.setColor(vDto.getColor());
-                variant.setSize(vDto.getSize());
-                variant.setStock(vDto.getStock());
+                ShoesVariant variant = ShoesVariant.builder()
+                        .variantId(vDto.getVariantId())
+                        .color(vDto.getColor())
+                        .size(vDto.getSize())
+                        .stock(stockVal)
+                        .shoes(shoes)
+                        .build();
                 newVariants.add(variant);
             }
-            shoes.setVariants(newVariants);
+            if (shoes.getVariants() == null) {
+                shoes.setVariants(new HashSet<>());
+            }
+            shoes.getVariants().clear();
+            shoes.getVariants().addAll(newVariants);
         }
 
         shoesRepository.save(shoes);
@@ -289,43 +311,28 @@ public class AdminProductService {
     }
 
     /* =========================
-       ADMIN – DISABLE PRODUCT
+       ADMIN – CHANGE/TOGGLE PRODUCT STATUS
        ========================= */
     @Transactional
-    public void disableShoes(Long shoeId) {
-        // TODO: Uncomment khi DB có column deleted và status
-        /*
-        Shoes shoes = shoesRepository.findByIdForAdmin(shoeId)
+    public void changeProductStatus(Long shoeId, Boolean status) {
+        Shoes shoes = shoesRepository.findById(shoeId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm ID: " + shoeId));
 
-        shoes.setStatus("NGỪNG BÁN");
+        shoes.setStatus(status);
         shoesRepository.save(shoes);
-        log.info("Admin disabled product ID: {}", shoeId);
-        */
-        
-        // TẠM THỜI chỉ log
-        log.warn("Admin disable product ID: {} - CHƯA IMPLEMENT (chờ DB có column status)", shoeId);
-        throw new UnsupportedOperationException("Chức năng ngừng bán chưa khả dụng. Vui lòng chờ DB được cập nhật.");
+
+        String statusText = status ? "ĐANG BÁN" : "NGỪNG BÁN";
+        log.info("Admin thay đổi trạng thái sản phẩm ID: {} thành {}", shoeId, statusText);
     }
 
-    /* =========================
-       ADMIN – DELETE PRODUCT (SOFT DELETE)
-       ========================= */
     @Transactional
-    public void deleteShoes(Long shoeId) {
-        // TODO: Uncomment khi DB có column deleted và status
-        /*
-        Shoes shoes = shoesRepository.findByIdForAdmin(shoeId)
+    public void toggleStatus(Long shoeId) {
+        Shoes shoes = shoesRepository.findById(shoeId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy sản phẩm ID: " + shoeId));
 
-        shoes.setDeleted(true);
-        shoes.setStatus("ĐÃ XÓA");
+        boolean current = shoes.getStatus() != null && shoes.getStatus();
+        shoes.setStatus(!current);
         shoesRepository.save(shoes);
-        log.info("Admin soft deleted product ID: {}", shoeId);
-        */
-        
-        // TẠM THỜI chỉ log
-        log.warn("Admin delete product ID: {} - CHƯA IMPLEMENT (chờ DB có columns deleted, status)", shoeId);
-        throw new UnsupportedOperationException("Chức năng xóa sản phẩm chưa khả dụng. Vui lòng chờ DB được cập nhật.");
+        log.info("Admin toggled status for product ID: {} to {}", shoeId, !current ? "ĐANG BÁN" : "NGỪNG BÁN");
     }
 }

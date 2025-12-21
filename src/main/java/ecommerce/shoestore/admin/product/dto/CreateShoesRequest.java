@@ -59,8 +59,5 @@ public class CreateShoesRequest {
 
         @NotBlank(message = "Size không được để trống")
         private String size;
-
-        @NotNull(message = "Số lượng không được để trống")
-        private Integer stock;
     }
 }

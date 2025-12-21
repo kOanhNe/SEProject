@@ -20,5 +20,5 @@ public class AdminShoesListItemDto {
     private String brand;
     private String categoryName;
     private BigDecimal basePrice;
-    private String status; // ĐANG BÁN, NGỪNG BÁN, ĐÃ XÓA
+    private Boolean status; // true=đang bán, false=ngừng bán
 }
