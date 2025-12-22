@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 @Entity
+@Data
 @Table(name = "inventory")
 @Getter
 @Setter
@@ -41,6 +42,6 @@ public class Inventory {
     @Column(name = "note", columnDefinition = "TEXT")
     private String note;
 
-    @Column(name = "\"ShoeId\"")
+    @Column(name = "\"shoeId\"")
     private Long shoeId;
 }

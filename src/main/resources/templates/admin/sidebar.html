@@ -23,23 +23,25 @@
                 <span class="menu-icon">🛍️</span>
                 <span class="menu-label">Quản lý sản phẩm</span>
             </a>
-            <a th:href="@{/admin/inventory}" class = "menu-item"
-                th:classappend="${activeMenu == 'inventory'} ? 'active' : ''">
-                <span class = "menu-icon">🏭</span>
-                <span class = "menu-label">Quản lý tồn kho</span>
-            </a>
 
             <hr/>
 
-            <a th:href="@{admin/order}" class="menu-item"
-                th:classappend="${activeMenu == 'order'} ? 'active' : ''">
-                <span class="menu-icon">📦</span>
-                <span class="menu-label">Quản lý đơn hàng</span>
+            <a th:href="@{/admin/inventory}" class="menu-item"
+                th:classappend="${activeMenu == 'inventory'} ? 'active' : ''">
+                <span class="menu-icon">🏭</span>
+                <span class="menu-label">Quản lý tồn kho</span>
+            </a>
+
+            <a th:href="@{/admin/promotions/campaigns}"
+               class="menu-item"
+               th:classappend="${activeMenu == 'promotions'} ? 'active' : ''">
+                <span class="menu-icon">🎯</span>
+                <span class="menu-label">Quản lý khuyến mãi</span>
             </a>
 
             <a href="#" class="menu-item disabled">
-                <span class="menu-icon">🎯</span>
-                <span class="menu-label">Quản lý khuyến mãi</span>
+                <span class="menu-icon">📦</span>
+                <span class="menu-label">Quản lý đơn hàng</span>
             </a>
 
             <a href="#" class="menu-item disabled">

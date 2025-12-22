@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
-            // 🔥 QUAN TRỌNG: TẮT formLogin
+            // QUAN TRỌNG: TẮT formLogin
             .formLogin(form -> form.disable())
 
             .logout(logout -> logout
