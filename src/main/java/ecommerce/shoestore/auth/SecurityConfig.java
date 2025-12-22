@@ -24,6 +24,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
 
             .authorizeHttpRequests(auth -> auth
+<<<<<<< Updated upstream
                 // PUBLIC
                 .requestMatchers(
                     "/", "/index",
@@ -39,6 +40,17 @@ public class SecurityConfig {
 
                 // CÒN LẠI: CẦN LOGIN
                 .anyRequest().authenticated()
+=======
+                .requestMatchers("/", "/index", "/auth/**", "/css/**", "/js/**", "/images/**", "/error", "/product/**", "/user/**", "/order/mock/**").permitAll()
+                .anyRequest().authenticated() 
+            )
+            .formLogin(form -> form
+                .loginPage("/auth/login") 
+                .loginProcessingUrl("/j_spring_security_check") 
+                .defaultSuccessUrl("/")
+                .failureUrl("/auth/login?error=true")  
+                .permitAll()
+>>>>>>> Stashed changes
             )
 
             // QUAN TRỌNG: TẮT formLogin
