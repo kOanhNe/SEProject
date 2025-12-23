@@ -18,4 +18,5 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
         where c.customer = :customer
     """)
     Optional<Cart> findCartWithItems(@Param("customer") User customer);
+
 }

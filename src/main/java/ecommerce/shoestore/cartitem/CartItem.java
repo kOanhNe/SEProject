@@ -6,16 +6,12 @@ import java.time.LocalDateTime;
 import ecommerce.shoestore.cart.Cart;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "cartitem", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"cartId", "variantId"})
 })
-
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -62,5 +58,4 @@ public class CartItem {
         this.quantity = quantity;
         this.unitPrice = unitPrice;
     }
-
 }

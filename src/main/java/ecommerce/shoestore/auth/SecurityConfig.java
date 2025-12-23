@@ -19,6 +19,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session
@@ -35,6 +36,29 @@ public class SecurityConfig {
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
                 )
+                .logout(logout -> logout
+                .logoutUrl("/auth/logout")
+                .logoutSuccessUrl("/auth/login?logout")
+                .permitAll()
+                );
+        .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                // PUBLIC
+                .requestMatchers(
+                        "/", "/index",
+                        "/auth/**",
+                        "/css/**", "/js/**", "/images/**",
+                        "/error",
+                        "/product/**",
+                        "/user/**"
+                ).permitAll()
+                // ADMIN ONLY
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                // CÒN LẠI: CẦN LOGIN
+                .anyRequest().authenticated()
+                )
+                // QUAN TRỌNG: TẮT formLogin
+                .formLogin(form -> form.disable())
                 .logout(logout -> logout
                 .logoutUrl("/auth/logout")
                 .logoutSuccessUrl("/auth/login?logout")

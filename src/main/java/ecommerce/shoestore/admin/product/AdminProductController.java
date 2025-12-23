@@ -39,6 +39,7 @@ public class AdminProductController {
             @RequestParam(required = false) String status,
             Model model
     ) {
+
         Page<AdminShoesListItemDto> productPage
                 = adminProductService.getAdminProductList(page, size, keyword, categoryId, brand, status);
 

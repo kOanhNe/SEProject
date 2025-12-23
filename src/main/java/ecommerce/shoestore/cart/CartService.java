@@ -7,6 +7,7 @@ import ecommerce.shoestore.cartitem.CartItem;
 import ecommerce.shoestore.cartitem.CartItemRepository;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;
+import ecommerce.shoestore.shoes.Shoes;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -164,5 +165,6 @@ public class CartService {
         BigDecimal total = cartSubtotal.add(shipping);
 
         return new CartSummaryView(items, cartSubtotal, shipping, total);
+
     }
 }
