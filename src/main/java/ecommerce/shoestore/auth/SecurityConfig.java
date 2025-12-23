@@ -21,34 +21,35 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .csrf(csrf -> csrf.disable())
-
-            .authorizeHttpRequests(auth -> auth
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session
+                        -> session.sessionFixation().none()
+                )
+                .authorizeHttpRequests(auth -> auth
                 // PUBLIC
                 .requestMatchers(
-                    "/", "/index",
-                    "/auth/**",
-                    "/css/**", "/js/**", "/images/**",
-                    "/error",
-                    "/product/**",
-                    "/user/**"
+                        "/", "/index", "/shoes", "/product/**",
+                        "/auth/**", "/user/**", "/cart/**",
+                        "/css/**", "/js/**", "/images/**",
+                        "/error"
                 ).permitAll()
-
-                // ADMIN ONLY
+                // ADMIN
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                // CÒN LẠI: CẦN LOGIN
+                // CÒN LẠI PHẢI LOGIN
                 .anyRequest().authenticated()
-            )
-
-            // QUAN TRỌNG: TẮT formLogin
-            .formLogin(form -> form.disable())
-
-            .logout(logout -> logout
+                )
+                .formLogin(form -> form
+                .loginPage("/auth/login")
+                .loginProcessingUrl("/j_spring_security_check")
+                .defaultSuccessUrl("/", true)
+                .failureUrl("/auth/login?error=true")
+                .permitAll()
+                )
+                .logout(logout -> logout
                 .logoutUrl("/auth/logout")
                 .logoutSuccessUrl("/auth/login?logout")
                 .permitAll()
-            );
+                );
 
         return http.build();
     }
