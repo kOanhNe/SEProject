@@ -11,8 +11,8 @@
         <nav class="menu">
 
             <a th:href="@{/admin}"
-               class="menu-item"
-               th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
+            class="menu-item"
+            th:classappend="${activeMenu == 'dashboard'} ? 'active' : ''">
                 <span class="menu-icon">🏠</span>
                 <span class="menu-label">Dashboard</span>
             </a>
@@ -24,7 +24,13 @@
                 <span class="menu-label">Quản lý sản phẩm</span>
             </a>
 
-            <hr>
+            <hr/>
+
+            <a th:href="@{/admin/inventory}" class="menu-item"
+                th:classappend="${activeMenu == 'inventory'} ? 'active' : ''">
+                <span class="menu-icon">🏭</span>
+                <span class="menu-label">Quản lý tồn kho</span>
+            </a>
 
             <a th:href="@{/admin/promotions/campaigns}"
                class="menu-item"
@@ -37,11 +43,6 @@
             <a href="#" class="menu-item disabled">
                 <span class="menu-icon">📦</span>
                 <span class="menu-label">Quản lý đơn hàng</span>
-            </a>
-
-            <a href="#" class="menu-item disabled">
-                <span class="menu-icon">🎯</span>
-                <span class="menu-label">Quản lý tồn kho</span>
             </a>
 
             <a href="#" class="menu-item disabled">
