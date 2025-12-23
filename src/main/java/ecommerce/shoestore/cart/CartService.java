@@ -126,10 +126,12 @@ public class CartService {
     public CartSummaryView getCartSummaryForView(User user) {
 
         Cart cart = cartRepository.findCartWithItems(user)
-                .orElseGet(() -> {
-                    Cart newCart = new Cart(user);
-                    return cartRepository.save(newCart);
-                });
+                .orElse(null);
+
+        // Nếu không có cart, return empty cart summary (không tạo mới trong read-only transaction)
+        if (cart == null) {
+            return new CartSummaryView(List.of(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        }
 
         List<CartItemView> items = cart.getItems().stream().map(item -> {
 
@@ -150,8 +152,8 @@ public class CartService {
                     variant.getVariantId(),
                     shoes.getName(),
                     shoes.getBrand(),
-                    variant.getColor(),
-                    variant.getSize(),
+                    variant.getColor().name(),
+                    variant.getSize().name(),
                     imageUrl,
                     item.getUnitPrice(),
                     item.getQuantity(),
@@ -168,4 +170,12 @@ public class CartService {
 
         return new CartSummaryView(items, cartSubtotal, shipping, total);
     }
+
+    // ================== GET OR CREATE CART ==================
+    @Transactional
+    public Cart getOrCreateCart(User user) {
+        return cartRepository.findByCustomer(user)
+                .orElseGet(() -> cartRepository.save(new Cart(user)));
+    }
 }
+
