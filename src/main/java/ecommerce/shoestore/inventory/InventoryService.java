@@ -43,6 +43,15 @@ public class InventoryService {
            .build();
         }).collect(Collectors.toList());
     }
+
+    public void updateNoteOnly(Long inventoryId, String newNote){
+        Inventory inventory = inventoryRepository.findById(inventoryId)
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy kho ID: " + inventoryId));
+        inventory.setNote(newNote);
+        inventory.setUpdateAt(LocalDateTime.now());
+        inventoryRepository.save(inventory);
+    }
+
     /*Chi tiết kho */
     public InventoryResponseDto getInventoryById(Long inventoryId) {
         Inventory inv = inventoryRepository.findById(inventoryId)

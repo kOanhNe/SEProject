@@ -59,6 +59,15 @@ public class InventoryController {
         return "admin/inventory/inventory-detail";
     }
 
+    @PostMapping("/update-note")
+    public String updateInventoryNote(
+        @RequestParam("inventoryId") Long inventoryId,
+        @RequestParam("note") String note
+    ) {
+        inventoryService.updateNoteOnly(inventoryId, note);
+        return "redirect:/admin/inventory/detail/" + inventoryId;
+    }
+
     public InventoryService getInventoryService() {
         return inventoryService;
     }
