@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/order")
-public class OrderController {
+public class OrderHistoryController {
     
     @Autowired
     private OrderService orderService;

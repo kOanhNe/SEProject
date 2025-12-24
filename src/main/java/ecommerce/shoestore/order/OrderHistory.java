@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Order {
+public class OrderHistory {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

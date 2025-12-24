@@ -17,10 +17,10 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
-public class OrderService {
+public class OrderHistoryService {
     
     @Autowired
-    private OrderRepository orderRepository;
+    private OrderHistoryRepository orderRepository;
     
     @Autowired
     private OrderTrackingLogRepository trackingLogRepository;
@@ -37,7 +37,7 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy khách hàng"));
         
         Pageable pageable = PageRequest.of(page, size);
-        Page<Order> orders = orderRepository.findByUserIdOrderByCreateAtDesc(customerId, pageable);
+        Page<OrderHistory> orders = orderRepository.findByUserIdOrderByCreateAtDesc(customerId, pageable);
         
         return orders.map(this::convertToHistoryDto);
     }
@@ -94,7 +94,7 @@ public class OrderService {
         return orders.map(this::convertToHistoryDto);
     }
     
-    private OrderHistoryDto convertToHistoryDto(Order order) {
+    private OrderHistoryDto convertToHistoryDto(OrderHistory order) {
         return OrderHistoryDto.builder()
                 .orderId(order.getOrderId())
                 .customerName("Customer") // Sẽ được load từ userId nếu cần

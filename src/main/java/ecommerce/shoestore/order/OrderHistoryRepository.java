@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderHistoryRepository extends JpaRepository<OrderHistory, Long> {
     
     // Tìm orders theo userId
     List<Order> findByUserIdOrderByCreateAtDesc(Long userId);
