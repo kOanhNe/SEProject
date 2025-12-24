@@ -47,12 +47,13 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/shoes", "/index", "/auth/**", "/css/**", "/js/**", "/images/**", "/error", "/product/**", "/user/**", "/cart/**", "/order/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                 .loginPage("/auth/login")
                 .loginProcessingUrl("/j_spring_security_check")
-                .defaultSuccessUrl("/")
+                .defaultSuccessUrl("/", true)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
                 )

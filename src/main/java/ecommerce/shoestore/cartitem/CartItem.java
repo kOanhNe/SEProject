@@ -7,10 +7,7 @@ import java.util.Objects;
 import ecommerce.shoestore.cart.Cart;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "cartitem", uniqueConstraints = {

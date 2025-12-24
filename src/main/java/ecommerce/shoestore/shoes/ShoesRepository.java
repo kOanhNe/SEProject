@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,16 +18,16 @@ public interface ShoesRepository extends JpaRepository<Shoes, Long> {
     Page<Shoes> findAllPaged(Pageable pageable);
 
     // Method for fetching with joins (without pagination)
-    @Query("SELECT DISTINCT s FROM Shoes s " +
-           "LEFT JOIN FETCH s.category " +
-           "LEFT JOIN FETCH s.images")
+    @Query("SELECT DISTINCT s FROM Shoes s "
+            + "LEFT JOIN FETCH s.category "
+            + "LEFT JOIN FETCH s.images")
     Page<Shoes> findAll(Pageable pageable);
 
     // Method to get shoes with details by IDs (for post-processing after pagination)
-    @Query("SELECT DISTINCT s FROM Shoes s " +
-           "LEFT JOIN FETCH s.category " +
-           "LEFT JOIN FETCH s.images " +
-           "WHERE s.shoeId IN :shoeIds")
+    @Query("SELECT DISTINCT s FROM Shoes s "
+            + "LEFT JOIN FETCH s.category "
+            + "LEFT JOIN FETCH s.images "
+            + "WHERE s.shoeId IN :shoeIds")
     java.util.List<Shoes> findAllWithDetailsByIds(@Param("shoeIds") java.util.List<Long> shoeIds);
 
     @Query("SELECT s FROM Shoes s " +
@@ -36,12 +37,12 @@ public interface ShoesRepository extends JpaRepository<Shoes, Long> {
            "WHERE s.shoeId = :shoeId")
     Optional<Shoes> findByIdWithDetails(@Param("shoeId") Long shoeId);
 
-    @Query("SELECT DISTINCT s FROM Shoes s " +
-           "LEFT JOIN FETCH s.category " +
-           "LEFT JOIN FETCH s.images " +
-           "WHERE s.category.categoryId = :categoryId " +
-           "AND s.shoeId <> :excludeShoeId")
-    Page<Shoes> findRelatedProducts(
+    @Query("SELECT s FROM Shoes s "
+            + "LEFT JOIN FETCH s.images "
+            + "WHERE s.category.categoryId = :categoryId "
+            + "AND s.shoeId != :excludeShoeId "
+            + "AND s.status = true")
+    List<Shoes> findRelatedProducts(
             @Param("categoryId") Long categoryId,
             @Param("excludeShoeId") Long excludeShoeId,
             Pageable pageable);

@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.stream.Collectors;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -191,13 +192,12 @@ public class ShoesService {
 
         Pageable pageable = PageRequest.of(0, 5);
 
-        Page<Shoes> relatedPage = shoesRepository.findRelatedProducts(
+        List<Shoes> relatedList = shoesRepository.findRelatedProducts(
                 shoes.getCategory().getCategoryId(),
                 shoes.getShoeId(),
                 pageable
         );
 
-        List<Shoes> relatedList = relatedPage.getContent();
         Map<Long, Integer> stockMap = getStockMapForShoes(relatedList);
 
         return relatedList.stream()

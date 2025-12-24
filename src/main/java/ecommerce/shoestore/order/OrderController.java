@@ -4,6 +4,8 @@ import ecommerce.shoestore.auth.user.User;
 import ecommerce.shoestore.auth.user.UserRepository;
 import ecommerce.shoestore.cart.Cart;
 import ecommerce.shoestore.cart.CartRepository;
+import ecommerce.shoestore.promotion.Voucher;
+import ecommerce.shoestore.promotion.VoucherRepository;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;
 import jakarta.servlet.http.HttpSession;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -25,6 +28,7 @@ public class OrderController {
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final ShoesVariantRepository shoesVariantRepository;
+    private final VoucherRepository voucherRepository;
     
     /**
      * Hiển thị trang checkout
@@ -148,7 +152,122 @@ public class OrderController {
         
         System.out.println("Returning checkout template");
         System.out.println("===== ORDER CHECKOUT DEBUG END =====");
-        return "checkout";
+        return "shipping-info";
+    }
+
+    /**
+     * Xử lý thông tin giao hàng và chuyển sang trang thanh toán
+     * POST /order/shipping
+     */
+    @PostMapping("/shipping")
+    public String submitShippingInfo(
+            @RequestParam String type,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) Integer quantity,
+            @RequestParam String recipientName,
+            @RequestParam String recipientPhone,
+            @RequestParam(required = false) String recipientEmail,
+            @RequestParam String recipientAddress,
+            @RequestParam(required = false) String note,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        
+        Long userId = (Long) session.getAttribute("USER_ID");
+        if (userId == null) {
+            return "redirect:/auth/login";
+        }
+        
+        // Lưu thông tin vào session
+        session.setAttribute("SHIPPING_TYPE", type);
+        session.setAttribute("SHIPPING_RECIPIENT_NAME", recipientName);
+        session.setAttribute("SHIPPING_RECIPIENT_PHONE", recipientPhone);
+        session.setAttribute("SHIPPING_RECIPIENT_EMAIL", recipientEmail);
+        session.setAttribute("SHIPPING_RECIPIENT_ADDRESS", recipientAddress);
+        session.setAttribute("SHIPPING_NOTE", note);
+        
+        if ("BUY_NOW".equals(type)) {
+            session.setAttribute("SHIPPING_VARIANT_ID", variantId);
+            session.setAttribute("SHIPPING_QUANTITY", quantity);
+        }
+        
+        // Redirect sang trang thanh toán
+        return "redirect:/order/payment";
+    }
+
+    /**
+     * Hiển thị trang thanh toán và voucher
+     * GET /order/payment
+     */
+    @GetMapping("/payment")
+    public String showPaymentPage(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        
+        Long userId = (Long) session.getAttribute("USER_ID");
+        if (userId == null) {
+            return "redirect:/auth/login";
+        }
+        
+        // Kiểm tra có thông tin shipping không
+        String type = (String) session.getAttribute("SHIPPING_TYPE");
+        if (type == null) {
+            redirectAttributes.addFlashAttribute("error", "Vui lòng nhập thông tin giao hàng trước");
+            return "redirect:/order/checkout?type=CART";
+        }
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin người dùng"));
+        
+        // Lấy thông tin shipping từ session
+        model.addAttribute("recipientName", session.getAttribute("SHIPPING_RECIPIENT_NAME"));
+        model.addAttribute("recipientPhone", session.getAttribute("SHIPPING_RECIPIENT_PHONE"));
+        model.addAttribute("recipientAddress", session.getAttribute("SHIPPING_RECIPIENT_ADDRESS"));
+        model.addAttribute("type", type);
+        
+        // Tính tổng tiền
+        BigDecimal subtotal;
+        BigDecimal shipping = new BigDecimal("30000");
+        
+        if ("CART".equals(type)) {
+            Cart cart = cartRepository.findCartWithItems(user).orElse(null);
+            if (cart == null || cart.getItems().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Giỏ hàng trống!");
+                return "redirect:/cart";
+            }
+            
+            subtotal = cart.getItems().stream()
+                    .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            model.addAttribute("cartItems", cart.getItems());
+        } else {
+            Long variantId = (Long) session.getAttribute("SHIPPING_VARIANT_ID");
+            Integer quantity = (Integer) session.getAttribute("SHIPPING_QUANTITY");
+            
+            ShoesVariant variant = shoesVariantRepository.findByIdWithShoes(variantId)
+                    .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+            
+            subtotal = variant.getShoes().getBasePrice().multiply(BigDecimal.valueOf(quantity));
+            
+            model.addAttribute("variant", variant);
+            model.addAttribute("quantity", quantity);
+        }
+        
+        model.addAttribute("subtotal", subtotal);
+        model.addAttribute("shipping", shipping);
+        model.addAttribute("total", subtotal.add(shipping));
+        
+        // Lấy danh sách voucher có thể dùng
+        List<Voucher> availableVouchers = voucherRepository.findAllWithCampaign().stream()
+                .filter(v -> v.getEnabled())
+                .filter(v -> !v.getStartDate().isAfter(LocalDate.now()))
+                .filter(v -> !v.getEndDate().isBefore(LocalDate.now()))
+                .filter(v -> v.getMinOrderValue() == null || subtotal.compareTo(v.getMinOrderValue()) >= 0)
+                .toList();
+        
+        model.addAttribute("vouchers", availableVouchers);
+        model.addAttribute("recipientEmail", session.getAttribute("SHIPPING_RECIPIENT_EMAIL"));
+        model.addAttribute("note", session.getAttribute("SHIPPING_NOTE"));
+        
+        return "payment";
     }
     
     /**
@@ -157,25 +276,12 @@ public class OrderController {
      */
     @PostMapping("/create")
     public String createOrder(
-            @RequestParam String type,
-            @RequestParam(required = false) Long variantId,
-            @RequestParam(required = false) Integer quantity,
-            @RequestParam String recipientName,
-            @RequestParam String recipientPhone,
-            @RequestParam(required = false) String recipientEmail,
-            @RequestParam String recipientAddress,
             @RequestParam String paymentMethod,
-            @RequestParam(required = false) String note,
+            @RequestParam(required = false) String voucherCode,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
         
         System.out.println("\n===== CREATE ORDER REQUEST RECEIVED =====");
-        System.out.println("Type: " + type);
-        System.out.println("VariantId: " + variantId);
-        System.out.println("Quantity: " + quantity);
-        System.out.println("RecipientName: " + recipientName);
-        System.out.println("RecipientPhone: " + recipientPhone);
-        System.out.println("PaymentMethod: " + paymentMethod);
         
         try {
             Long userId = (Long) session.getAttribute("USER_ID");
@@ -184,6 +290,19 @@ public class OrderController {
             if (userId == null) {
                 return "redirect:/auth/login";
             }
+            
+            // Lấy thông tin từ session
+            String type = (String) session.getAttribute("SHIPPING_TYPE");
+            String recipientName = (String) session.getAttribute("SHIPPING_RECIPIENT_NAME");
+            String recipientPhone = (String) session.getAttribute("SHIPPING_RECIPIENT_PHONE");
+            String recipientEmail = (String) session.getAttribute("SHIPPING_RECIPIENT_EMAIL");
+            String recipientAddress = (String) session.getAttribute("SHIPPING_RECIPIENT_ADDRESS");
+            String note = (String) session.getAttribute("SHIPPING_NOTE");
+            
+            System.out.println("Type: " + type);
+            System.out.println("RecipientName: " + recipientName);
+            System.out.println("PaymentMethod: " + paymentMethod);
+            System.out.println("VoucherCode: " + voucherCode);
             
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin người dùng"));
@@ -203,6 +322,9 @@ public class OrderController {
                 
             } else if ("BUY_NOW".equals(type)) {
                 // Tạo đơn từ mua ngay
+                Long variantId = (Long) session.getAttribute("SHIPPING_VARIANT_ID");
+                Integer quantity = (Integer) session.getAttribute("SHIPPING_QUANTITY");
+                
                 order = orderService.createOrderBuyNow(
                         user.getUserId(),
                         recipientName, recipientPhone, recipientEmail, recipientAddress,
@@ -213,6 +335,16 @@ public class OrderController {
             } else {
                 throw new RuntimeException("Loại đơn hàng không hợp lệ");
             }
+            
+            // Xóa session shipping data
+            session.removeAttribute("SHIPPING_TYPE");
+            session.removeAttribute("SHIPPING_RECIPIENT_NAME");
+            session.removeAttribute("SHIPPING_RECIPIENT_PHONE");
+            session.removeAttribute("SHIPPING_RECIPIENT_EMAIL");
+            session.removeAttribute("SHIPPING_RECIPIENT_ADDRESS");
+            session.removeAttribute("SHIPPING_NOTE");
+            session.removeAttribute("SHIPPING_VARIANT_ID");
+            session.removeAttribute("SHIPPING_QUANTITY");
             
             redirectAttributes.addFlashAttribute("message", "Đặt hàng thành công!");
             return "redirect:/order/confirmation/" + order.getOrderId();
