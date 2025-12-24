@@ -20,4 +20,14 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findCategoriesByShoesType(
             @Param("type") ShoesType type
     );
+
+    /**
+     * Lấy tất cả danh mục, sắp xếp theo tên
+     */
+    List<Category> findAllByOrderByNameAsc();
+
+    /**
+     * Kiểm tra danh mục có tồn tại theo tên
+     */
+    boolean existsByName(String name);
 }

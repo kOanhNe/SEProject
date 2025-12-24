@@ -19,26 +19,38 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
-            .csrf(csrf -> csrf.disable())
-                .requestCache(cache -> cache.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index", "/auth/**", "/css/**", "/js/**", "/images/**", "/error", "/product/**", "/user/**", "/api/search-suggestions", "/search/**", "/products").permitAll()
-                .anyRequest().authenticated() 
-            )
-            .formLogin(form -> form
-                .loginPage("/auth/login") 
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session
+                        -> session.sessionFixation().none()
+                )
+                .authorizeHttpRequests(auth -> auth
+                // PUBLIC
+                .requestMatchers(
+                        "/", "/index", "/shoes", "/product/**",
+                        "/auth/**", "/user/**", "/cart/**",
+                        "/css/**", "/js/**", "/images/**",
+                        "/error", "/api/search-suggestions", "/search/**", "/products"
+                ).permitAll()
+                // ADMIN
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                // CÒN LẠI PHẢI LOGIN
+                .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                .loginPage("/auth/login")
                 .loginProcessingUrl("/j_spring_security_check")
                 .defaultSuccessUrl("/", true)
-                .failureUrl("/auth/login?error=true")  
+                .failureUrl("/auth/login?error=true")
                 .permitAll()
-            )
-            .logout(logout -> logout
+                )
+                .logout(logout -> logout
                 .logoutUrl("/auth/logout")
-                .logoutSuccessUrl("/auth/login?logout") 
+                .logoutSuccessUrl("/auth/login?logout")
                 .permitAll()
-            );
-            
+                );
+
         return http.build();
     }
 }

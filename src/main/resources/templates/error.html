@@ -1,60 +1,34 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>WebShoe - Lỗi</title>
-    <th:block th:replace="fragments :: head_header"></th:block>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${errorCode} ?: 'Lỗi'">Lỗi</title>
+    <link rel="stylesheet" th:href="@{/css/common.css}">
     <style>
-        .error-container {
-            min-height: 60vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 2rem;
-        }
-        .error-code {
-            font-size: 6rem;
-            font-weight: bold;
-            color: #dc3545;
-            margin-bottom: 1rem;
-        }
-        .error-message {
-            font-size: 1.5rem;
-            color: #666;
-            margin-bottom: 2rem;
-        }
-        .btn-home {
-            background-color: #333;
-            color: white;
-            padding: 12px 30px;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        .btn-home:hover {
-            background-color: #555;
-            color: white;
-        }
+        body { margin:0; font-family: 'Segoe UI', Tahoma, sans-serif; background:#0f172a; color:#e2e8f0; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+        .card { background:#111827; border:1px solid #1f2937; border-radius:16px; padding:32px 28px; max-width:640px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.35); }
+        .code { display:inline-flex; align-items:center; justify-content:center; width:64px; height:64px; border-radius:14px; background:#1d4ed8; color:#e0f2fe; font-size:22px; font-weight:700; margin-bottom:18px; box-shadow:0 12px 30px rgba(59,130,246,0.35); }
+        h1 { margin:0 0 10px; font-size:24px; letter-spacing:0.3px; }
+        p { margin:0 0 18px; color:#cbd5e1; line-height:1.6; }
+        .actions { display:flex; gap:12px; flex-wrap:wrap; }
+        .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1px solid transparent; font-weight:600; text-decoration:none; transition:all 0.18s ease; }
+        .primary { background:#2563eb; color:#e0f2fe; border-color:#1d4ed8; }
+        .primary:hover { background:#1d4ed8; }
+        .ghost { background:transparent; color:#e2e8f0; border-color:#334155; }
+        .ghost:hover { border-color:#475569; }
+        .small { font-size:13px; color:#94a3b8; }
     </style>
 </head>
 <body>
-
-<div th:replace="fragments :: header"></div>
-
-<div class="container">
-    <div class="error-container">
-        <div class="error-code" th:text="${errorCode} ?: 'Lỗi'">404</div>
-        <div class="error-message" th:text="${errorMessage} ?: 'Đã có lỗi xảy ra'">
-            Không tìm thấy trang bạn yêu cầu
-        </div>
-        <a href="/" class="btn-home">
-            <i class="fas fa-home"></i> Về trang chủ
-        </a>
+<div class="card">
+    <div class="code" th:text="${errorCode} ?: '500'"></div>
+    <h1 th:text="${errorMessage} ?: 'Đã có lỗi xảy ra'"></h1>
+    <p class="small">Nếu bạn vừa thử thao tác gì đó, hãy thử lại sau vài phút. Nếu lỗi tiếp diễn, báo cho quản trị hệ thống.</p>
+    <div class="actions">
+        <a class="btn primary" href="/">⬅️ Về trang chủ</a>
+        <a class="btn ghost" href="javascript:history.back()">↩️ Quay lại</a>
     </div>
 </div>
-
-<div th:replace="fragments :: footer"></div>
-
 </body>
 </html>
