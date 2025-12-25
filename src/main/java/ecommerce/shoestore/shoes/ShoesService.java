@@ -101,21 +101,14 @@ public class ShoesService {
         String categoryName = shoes.getCategory() != null ? shoes.getCategory().getName() : "General";
 
         List<String> imageUrls = new ArrayList<>();
-        String thumbnailUrl = null;
 
         if (shoes.getImages() != null && !shoes.getImages().isEmpty()) {
             for (ShoesImage img : shoes.getImages()) {
                 imageUrls.add(img.getUrl());
-                if (img.isThumbnail()) {
-                    thumbnailUrl = img.getUrl();
-                }
             }
         }
 
-        if (thumbnailUrl == null && !imageUrls.isEmpty()) {
-            thumbnailUrl = imageUrls.get(0);
-        }
-
+        // Nếu không có hình ảnh, thêm placeholder
         if (imageUrls.isEmpty()) {
             imageUrls.add("https://placehold.co/600x600?text=No+Image");
         }
