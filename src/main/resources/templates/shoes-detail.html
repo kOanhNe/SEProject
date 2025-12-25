@@ -70,6 +70,17 @@
 
                 <hr class="my-4">
 
+                <!-- ================== ALERT MESSAGE ================== -->
+                <div class="alert alert-success"
+                    th:if="${successMessage}"
+                    th:text="${successMessage}">
+                </div>
+
+                <div class="alert alert-danger"
+                    th:if="${errorMessage}"
+                    th:text="${errorMessage}">
+                </div>
+
                 <!--Add cart item -->
                 <form th:action="@{/cart/add}" method="post">
 
@@ -84,8 +95,7 @@
                              th:each="variant : ${product.variants}">
                         <input type="radio"
                             name="variantId"
-                            th:value="${variant.variantId}"
-                            required>
+                            th:value="${variant.variantId}">
                             <span th:text="${variant.size}">40</span>
                         </label>
                         </div>
