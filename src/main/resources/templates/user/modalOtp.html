@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="otp-component">
+
+    <div class="modal fade" id="otpModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-4">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <i class="fas fa-shield-alt text-primary" style="font-size: 3rem;"></i>
+                    </div>
+                    <h4 class="fw-bold">Xác thực OTP</h4>
+                    <p class="text-muted small">Mã xác thực 6 số đã được gửi đến email của bạn.</p>
+
+                    <div class="my-4">
+                        <input type="text"
+                               class="otp-single-input"
+                               id="otpInput"
+                               maxlength="6"
+                               placeholder="------"
+                               inputmode="numeric"
+                               pattern="[0-9]*"
+                               autocomplete="one-time-code">
+                    </div>
+
+                    <div id="modalMsg" class="small mb-3"></div>
+
+                    <button type="button" class="btn btn-primary w-100 mb-2" id="btnFinishChangePass">Hoàn tất</button>
+                    <button type="button" class="btn btn-link text-decoration-none btn-sm" id="btnResendOtp">Gửi lại mã?</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const btnTrigger = document.getElementById('btnTriggerOtp');
+            const btnFinish = document.getElementById('btnFinishChangePass');
+            const btnResend = document.getElementById('btnResendOtp');
+            const form = document.getElementById('changePassForm');
+            const finalOtpInput = document.getElementById('finalOtpInput');
+            const modalMsg = document.getElementById('modalMsg');
+            const otpInput = document.getElementById('otpInput');
+
+            if (!btnTrigger) return;
+
+            const otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+
+            otpInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if(this.value.length === 6) {
+                    modalMsg.innerText = "";
+                    modalMsg.className = "";
+                }
+            });
+
+            btnTrigger.addEventListener('click', function() {
+                const oldPass = document.getElementById('oldPass').value;
+                const newPass = document.getElementById('newPass').value;
+                const confirmPass = document.getElementById('confirmPass').value;
+
+                if(!oldPass || !newPass || !confirmPass) {
+                    alert("Vui lòng nhập đầy đủ thông tin mật khẩu!");
+                    return;
+                }
+                if(newPass !== confirmPass) {
+                    alert("Mật khẩu xác nhận không khớp!");
+                    return;
+                }
+
+                const originalText = btnTrigger.innerHTML;
+                btnTrigger.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi mã...';
+                btnTrigger.disabled = true;
+
+                fetch('/user/profile/send-otp-password', { method: 'POST' })
+                    .then(res => {
+                        if(res.ok) {
+                            otpModal.show();
+                            modalMsg.className = "text-success";
+                            modalMsg.innerText = "Mã OTP đã được gửi.";
+                            otpInput.value = "";
+                            setTimeout(() => otpInput.focus(), 500);
+                        } else {
+                            alert("Lỗi gửi OTP. Thử lại sau.");
+                        }
+                    })
+                    .catch(err => alert("Lỗi kết nối."))
+                    .finally(() => {
+                        btnTrigger.innerHTML = originalText;
+                        btnTrigger.disabled = false;
+                    });
+            });
+
+            btnFinish.addEventListener('click', function() {
+                const otpCode = otpInput.value;
+                if (otpCode.length < 6) {
+                    modalMsg.className = "text-danger";
+                    modalMsg.innerText = "Vui lòng nhập đủ 6 số.";
+                    otpInput.focus();
+                    return;
+                }
+                finalOtpInput.value = otpCode;
+                form.submit();
+            });
+
+            btnResend.addEventListener('click', function() {
+                btnResend.innerText = "Đang gửi...";
+                fetch('/user/profile/send-otp-password', { method: 'POST' })
+                    .then(res => {
+                        if(res.ok) {
+                            modalMsg.className = "text-success";
+                            modalMsg.innerText = "Đã gửi lại mã mới!";
+                            otpInput.value = "";
+                            otpInput.focus();
+                        }
+                    })
+                    .finally(() => setTimeout(() => btnResend.innerText = "Gửi lại mã?", 3000));
+            });
+        });
+    </script>
+</div>
+</body>
+</html>

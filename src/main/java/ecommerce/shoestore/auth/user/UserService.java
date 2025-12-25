@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+
 import java.io.IOException;
 
 @Service
@@ -32,7 +33,6 @@ public class UserService {
     public UpdateProfileRequest getProfileForDisplay(String email) {
         User user = getCurrentUser(email);
 
-        // Tái sử dụng UpdateProfileRequest làm DTO trả về
         UpdateProfileRequest dto = new UpdateProfileRequest();
 
         // Map thông tin cơ bản
@@ -41,9 +41,9 @@ public class UserService {
         dto.setPhone(user.getPhone());
         dto.setDateOfBirth(user.getDateOfBirth());
         dto.setGender(user.getGender());
-        dto.setAvatar(user.getAvatar()); // Đây là String đường dẫn ảnh
+        dto.setAvatar(user.getAvatar());
 
-        // Map địa chỉ (nếu có) - ĐÂY LÀ ĐOẠN BẠN CẦN
+        // Map địa chỉ
         if (user.getAddress() != null) {
             dto.setProvince(user.getAddress().getProvince());
             dto.setDistrict(user.getAddress().getDistrict());
@@ -62,13 +62,11 @@ public class UserService {
     public void updateProfile(String email, UpdateProfileRequest request) throws IOException {
         User user = getCurrentUser(email);
 
-        // Update thông tin cơ bản
         user.setFullname(request.getFullname());
         user.setPhone(request.getPhone());
         user.setGender(request.getGender());
         user.setDateOfBirth(request.getDateOfBirth());
 
-        // Update địa chỉ
         if (user.getAddress() == null) {
             user.setAddress(new Address());
         }
@@ -78,7 +76,6 @@ public class UserService {
         address.setCommune(request.getCommune());
         address.setStreetDetail(request.getStreetDetail());
 
-        // Update Avatar
         if (request.getAvatarFile() != null && !request.getAvatarFile().isEmpty()) {
             String avatarUrl = fileUploadService.uploadFile(request.getAvatarFile());
 
