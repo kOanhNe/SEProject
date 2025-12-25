@@ -71,15 +71,15 @@ public class ShoesService {
 
         List<Long> shoeIds = shoesList.stream()
                 .map(Shoes::getShoeId)
-                .collect(Collectors.toList());
+                .toList();
 
         List<Object[]> stockResults = variantRepository.getTotalStocksByShoeIds(shoeIds);
 
-        return stockResults.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> ((Number) row[1]).intValue()
-                ));
+        Map<Long, Integer> stockMap = new HashMap<>();
+        for (Object[] row : stockResults) {
+            stockMap.put((Long) row[0], ((Number) row[1]).intValue());
+        }
+        return stockMap;
     }
 
     private ShoesSummaryDto convertToSummaryDto(Shoes shoes, Map<Long, Integer> stockMap) {

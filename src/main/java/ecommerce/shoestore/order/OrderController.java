@@ -4,8 +4,9 @@ import ecommerce.shoestore.auth.user.User;
 import ecommerce.shoestore.auth.user.UserRepository;
 import ecommerce.shoestore.cart.Cart;
 import ecommerce.shoestore.cart.CartRepository;
+import ecommerce.shoestore.promotion.CustomerPromotionService;
 import ecommerce.shoestore.promotion.Voucher;
-import ecommerce.shoestore.promotion.VoucherRepository;
+import ecommerce.shoestore.promotion.dto.VoucherValidationResult;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;
 import jakarta.servlet.http.HttpSession;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -29,7 +29,7 @@ public class OrderController {
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
     private final ShoesVariantRepository shoesVariantRepository;
-    private final VoucherRepository voucherRepository;
+    private final CustomerPromotionService customerPromotionService;
     
     /**
      * Hiển thị trang checkout
@@ -304,6 +304,37 @@ public class OrderController {
     }
 
     /**
+     * API endpoint để validate voucher (AJAX)
+     */
+    @PostMapping("/voucher/validate")
+    @ResponseBody
+    public java.util.Map<String, Object> validateVoucher(
+            @RequestParam String voucherCode,
+            @RequestParam BigDecimal orderSubTotal,
+            HttpSession session) {
+        
+        Long userId = (Long) session.getAttribute("USER_ID");
+        if (userId == null) {
+            throw new RuntimeException("User not logged in");
+        }
+        
+        VoucherValidationResult result = customerPromotionService.validateVoucher(
+                voucherCode, userId, orderSubTotal);
+        
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("valid", result.isValid());
+        
+        if (result.isValid()) {
+            response.put("discountAmount", result.getDiscountAmount());
+            response.put("message", String.format("Áp dụng thành công! Giảm %,.0f₫", result.getDiscountAmount()));
+        } else {
+            response.put("message", result.getErrorMessage());
+        }
+        
+        return response;
+    }
+    
+    /**
      * Hiển thị trang thanh toán và voucher
      * GET /order/payment
      */
@@ -369,13 +400,8 @@ public class OrderController {
         model.addAttribute("shipping", shipping);
         model.addAttribute("total", subtotal.add(shipping));
         
-        // Lấy danh sách voucher có thể dùng
-        List<Voucher> availableVouchers = voucherRepository.findAllWithCampaign().stream()
-                .filter(v -> v.getEnabled())
-                .filter(v -> !v.getStartDate().isAfter(LocalDate.now()))
-                .filter(v -> !v.getEndDate().isBefore(LocalDate.now()))
-                .filter(v -> v.getMinOrderValue() == null || subtotal.compareTo(v.getMinOrderValue()) >= 0)
-                .toList();
+        // Lấy danh sách voucher có thể dùng (sử dụng CustomerPromotionService)
+        List<Voucher> availableVouchers = customerPromotionService.getAvailableVouchers(userId, subtotal);
         
         model.addAttribute("vouchers", availableVouchers);
         model.addAttribute("recipientEmail", session.getAttribute("SHIPPING_RECIPIENT_EMAIL"));
@@ -428,7 +454,7 @@ public class OrderController {
                 
                 order = orderService.createOrderFromCart(
                         user.getUserId(), addressId, recipientEmail,
-                        paymentMethod, note, cart
+                        paymentMethod, note, cart, voucherCode
                 );
                 
             } else if ("BUY_NOW".equals(type)) {
@@ -438,7 +464,7 @@ public class OrderController {
                 
                 order = orderService.createOrderBuyNow(
                         user.getUserId(), addressId, recipientEmail,
-                        paymentMethod, note, variantId, quantity
+                        paymentMethod, note, variantId, quantity, voucherCode
                 );
                 
             } else {

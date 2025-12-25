@@ -60,12 +60,16 @@
                         <label class="required">Thuộc chiến dịch</label>
                         <select th:field="*{campaignId}" required id="campaignSelect">
                             <option value="">-- Chọn chiến dịch --</option>
-                            <option th:each="c : ${campaigns}" 
+                                <option th:each="c : ${campaigns}" 
                                     th:value="${c.campaignId}" 
                                     th:text="${c.name}"
-                                    th:attr="data-discount-type=${c.discountType}, data-discount-value=${c.discountValue}, data-max-discount=${c.maxDiscountAmount}, data-min-order=${c.minOrderValue}"></option>
+                                    th:attr="data-discount-type=${c.discountType}, data-discount-value=${c.discountValue}, data-max-discount=${c.maxDiscountAmount}, data-min-order=${c.minOrderValue != null ? c.minOrderValue : 0}, data-start-date=${#temporals.format(c.startDate, 'yyyy-MM-dd')}, data-end-date=${#temporals.format(c.endDate, 'yyyy-MM-dd')}"></option>
                         </select>
                         <small style="color: #6b7280; font-size: 12px;">Voucher sẽ kế thừa quy tắc giảm giá từ chiến dịch này</small>
+                        <div id="campaignDateRange" style="display: none; margin-top: 8px; padding: 8px 12px; background: #fef3c7; border-left: 3px solid #f59e0b; font-size: 13px; color: #92400e;">
+                            <strong>⚠️ Phạm vi thời gian chiến dịch:</strong> <span id="campaignDates"></span><br>
+                            <span style="font-size: 12px;">Voucher chỉ có thể hoạt động trong khoảng thời gian này</span>
+                        </div>
                         <div class="error-message" th:if="${#fields.hasErrors('campaignId')}" th:errors="*{campaignId}"></div>
                     </div>
 
@@ -100,17 +104,17 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="required">Ngày bắt đầu</label>
-                            <input type="date" name="startDate" 
-                                   th:value="${voucher.startDate != null ? voucher.startDate : ''}"
-                                   required>
+                            <input type="date" id="startDate" name="startDate" 
+                                th:value="${voucher.startDate != null ? voucher.startDate : ''}"
+                                required>
                             <small style="color: #6b7280; font-size: 12px;">Ngày voucher có hiệu lực</small>
                             <div class="error-message" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
                         </div>
                         <div class="form-group">
                             <label class="required">Ngày kết thúc</label>
-                            <input type="date" name="endDate"
-                                   th:value="${voucher.endDate != null ? voucher.endDate : ''}"
-                                   required>
+                            <input type="date" id="endDate" name="endDate"
+                                th:value="${voucher.endDate != null ? voucher.endDate : ''}"
+                                required>
                             <small style="color: #6b7280; font-size: 12px;">Ngày voucher hết hạn</small>
                             <div class="error-message" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
                         </div>
@@ -139,6 +143,10 @@
     // Auto-fill discount info từ campaign khi chọn
     const campaignSelect = document.getElementById('campaignSelect');
     const discountInfo = document.getElementById('discountInfo');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const campaignDateRange = document.getElementById('campaignDateRange');
+    const campaignDates = document.getElementById('campaignDates');
 
     campaignSelect?.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
@@ -147,7 +155,10 @@
             const discountType = selectedOption.getAttribute('data-discount-type');
             const discountValue = selectedOption.getAttribute('data-discount-value');
             const maxDiscount = selectedOption.getAttribute('data-max-discount');
-            const minOrder = selectedOption.getAttribute('data-min-order');
+            const minOrderAttr = selectedOption.getAttribute('data-min-order');
+            const minOrder = minOrderAttr && minOrderAttr !== 'null' ? minOrderAttr : '0';
+            const startDate = selectedOption.getAttribute('data-start-date');
+            const endDate = selectedOption.getAttribute('data-end-date');
 
             // Fill hidden fields
             document.getElementById('discountType').value = discountType || '';
@@ -162,10 +173,33 @@
             document.getElementById('infoMinOrder').textContent = minOrder ? minOrder + ' VNĐ' : 'Không yêu cầu';
 
             discountInfo.style.display = 'block';
+            
+            // Set date range constraints and show campaign dates
+            if (startDate && endDate) {
+                startDateInput.min = startDate;
+                startDateInput.max = endDate;
+                endDateInput.min = startDate;
+                endDateInput.max = endDate;
+                
+                campaignDates.textContent = formatDate(startDate) + ' đến ' + formatDate(endDate);
+                campaignDateRange.style.display = 'block';
+            } else {
+                campaignDateRange.style.display = 'none';
+            }
         } else {
             discountInfo.style.display = 'none';
+            campaignDateRange.style.display = 'none';
+            startDateInput.removeAttribute('min');
+            startDateInput.removeAttribute('max');
+            endDateInput.removeAttribute('min');
+            endDateInput.removeAttribute('max');
         }
     });
+    
+    function formatDate(dateStr) {
+        const parts = dateStr.split('-');
+        return parts[2] + '/' + parts[1] + '/' + parts[0];
+    }
 
     // Trigger change on page load if campaign is already selected
     if (campaignSelect && campaignSelect.value) {
