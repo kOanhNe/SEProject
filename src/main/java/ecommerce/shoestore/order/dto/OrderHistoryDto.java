@@ -19,6 +19,8 @@ public class OrderHistoryDto {
     private String customerEmail;
     private LocalDateTime createAt;
     private OrderStatus status;
+    private String statusDisplay; // Tiếng Việt 
+    private String statusColorClass; // CSS class
     private BigDecimal subTotal;
     private BigDecimal discountAmount;
     private BigDecimal totalAmount;
