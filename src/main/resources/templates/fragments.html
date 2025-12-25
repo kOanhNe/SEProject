@@ -87,6 +87,7 @@
             </div>
 
             <!--Cart icon  -->
+
             <a th:if="${role == null || role.toString() != 'ADMIN'}"
             th:href="@{/cart}" class="nav-icon position-relative text-dark text-decoration-none">
 
@@ -140,6 +141,8 @@
                     </li>
                 </ul>
             </div>
+
+
         </div>
     </div>
 </nav>
