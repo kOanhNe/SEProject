@@ -233,18 +233,18 @@ public class ShoesService {
                 .collect(Collectors.toList());
     }
 
-    private Sort buildSort(String sortKey) {
+    private String buildSortKey(String sortKey) {
         if (sortKey == null || sortKey.isBlank()) {
-            return Sort.by("createdAt").descending(); // mặc định: mới nhất
+            return "name_asc"; // mặc định
         }
 
         return switch (sortKey) {
-            case "newest" -> Sort.by("createdAt").descending();
-            case "price_asc" -> Sort.by("basePrice").ascending();
-            case "price_desc" -> Sort.by("basePrice").descending();
-            case "name_asc" -> Sort.by("name").ascending();
-            case "name_desc" -> Sort.by("name").descending();
-            default -> Sort.by("createdAt").descending();
+            case "newest",
+                 "price_asc",
+                 "price_desc",
+                 "name_asc",
+                 "name_desc" -> sortKey;
+            default -> "name_asc";
         };
     }
 
@@ -284,8 +284,10 @@ public class ShoesService {
             );
         }
 
-        Sort sortObj = buildSort(sort);
-        Pageable pageable = PageRequest.of(page - 1, size, sortObj);
+        String sortKey = buildSortKey(sort);
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
 
         String kw = (keyword != null && !keyword.isBlank())
                 ? keyword.trim()
@@ -295,9 +297,10 @@ public class ShoesService {
                 kw,
                 categoryId,
                 brand,
-                type,          // ✅ truyền thẳng String
+                type,
                 minPrice,
                 maxPrice,
+                sortKey,
                 pageable
         );
 
@@ -320,15 +323,6 @@ public class ShoesService {
         return shoesRepository.findDistinctBrandsByType(type);
     }
 
-    private Pageable buildPageable(int page, int size, String sort) {
-        if ("sold".equals(sort)) {
-            // sold dùng ORDER BY trong query → KHÔNG dùng Sort
-            return PageRequest.of(page - 1, size);
-        }
-
-        Sort sortObj = buildSort(sort);
-        return PageRequest.of(page - 1, size, sortObj);
-    }
 
     @Transactional(readOnly = true)
     public ShoesListDto searchProductsWithSoldSort(
@@ -351,7 +345,7 @@ public class ShoesService {
                 kw,
                 categoryId,
                 brand,
-                type,          // ✅ dùng trực tiếp String
+                type,
                 minPrice,
                 maxPrice,
                 pageable
