@@ -93,19 +93,36 @@ public interface ShoesRepository extends JpaRepository<Shoes, Long> {
       AND (:type IS NULL OR s.type = CAST(:type AS varchar))
       AND (:minPrice IS NULL OR s."basePrice" >= :minPrice)
       AND (:maxPrice IS NULL OR s."basePrice" <= :maxPrice)
+
+    ORDER BY
+      CASE WHEN :sort = 'newest'     THEN s."createdAt" END DESC,
+      CASE WHEN :sort = 'price_asc'  THEN s."basePrice" END ASC,
+      CASE WHEN :sort = 'price_desc' THEN s."basePrice" END DESC,
+      CASE WHEN :sort = 'name_asc'   THEN s.name END ASC,
+      CASE WHEN :sort = 'name_desc'  THEN s.name END DESC,
+      s."createdAt" DESC
     """,
             countQuery = """
         SELECT COUNT(*)
         FROM shoes s
+        WHERE (:kw IS NULL
+                OR s.name ILIKE '%' || :kw || '%'
+                OR s.brand ILIKE '%' || :kw || '%')
+          AND (:categoryId IS NULL OR s."categoryId" = :categoryId)
+          AND (:brand IS NULL OR s.brand ILIKE '%' || :brand || '%')
+          AND (:type IS NULL OR s.type = CAST(:type AS varchar))
+          AND (:minPrice IS NULL OR s."basePrice" >= :minPrice)
+          AND (:maxPrice IS NULL OR s."basePrice" <= :maxPrice)
     """,
             nativeQuery = true)
     Page<Shoes> searchAndFilter(
             @Param("kw") String keyword,
             @Param("categoryId") Long categoryId,
             @Param("brand") String brand,
-            @Param("type") String type,   // ⚠️ ENUM → STRING
+            @Param("type") String type,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
+            @Param("sort") String sort,
             Pageable pageable
     );
 
