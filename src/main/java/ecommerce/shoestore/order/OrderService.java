@@ -3,6 +3,7 @@ package ecommerce.shoestore.order;
 import ecommerce.shoestore.cart.Cart;
 import ecommerce.shoestore.cart.CartRepository;
 import ecommerce.shoestore.cartitem.CartItem;
+import ecommerce.shoestore.cartitem.CartItemRepository;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final ShoesVariantRepository shoesVariantRepository;
     
     private static final BigDecimal SHIPPING_FEE = new BigDecimal("30000");
@@ -136,5 +138,61 @@ public class OrderService {
     
     public List<OrderItem> getOrderItems(Long orderId) {
         return orderItemRepository.findByOrderId(orderId);
+    }
+    
+    @Transactional
+    public Order createOrderFromSelectedItems(Long userId, Long addressId, String recipientEmail,
+                                              String paymentMethod, String note, 
+                                              List<CartItem> selectedItems) {
+        
+        // Tính subTotal từ items được chọn
+        BigDecimal subTotal = BigDecimal.ZERO;
+        for (CartItem item : selectedItems) {
+            BigDecimal itemTotal = item.getUnitPrice()
+                    .multiply(BigDecimal.valueOf(item.getQuantity()));
+            subTotal = subTotal.add(itemTotal);
+        }
+        
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        BigDecimal totalAmount = subTotal.add(SHIPPING_FEE).subtract(discountAmount);
+        
+        // Tạo Order
+        Order order = new Order();
+        order.setUserId(userId);
+        order.setOrderAddressId(addressId);
+        order.setRecipientEmail(recipientEmail);
+        order.setSubTotal(subTotal);
+        order.setShippingFee(SHIPPING_FEE);
+        order.setDiscountAmount(discountAmount);
+        order.setTotalAmount(totalAmount);
+        order.setPaymentMethod(paymentMethod);
+        order.setNote(note);
+        order.setStatus("PENDING");
+        
+        order = orderRepository.save(order);
+        
+        // Tạo OrderItems CHỈ cho items được chọn
+        for (CartItem item : selectedItems) {
+            ShoesVariant variant = item.getVariant();
+            
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrderId(order.getOrderId());
+            orderItem.setShoeId(variant.getShoes().getShoeId());
+            orderItem.setQuantity((long) item.getQuantity());
+            orderItem.setProductName(variant.getShoes().getName());
+            orderItem.setVariantInfo("Size: " + variant.getSize() + ", Color: " + variant.getColor());
+            orderItem.setUnitPrice(item.getUnitPrice());
+            orderItem.setShopDiscount(BigDecimal.ZERO);
+            orderItem.setItemTotal(item.getUnitPrice()
+                    .multiply(BigDecimal.valueOf(item.getQuantity())));
+            orderItemRepository.save(orderItem);
+        }
+        
+        // Xóa CHỈ các items đã đặt hàng khỏi giỏ
+        for (CartItem item : selectedItems) {
+            cartItemRepository.delete(item);
+        }
+        
+        return order;
     }
 }
