@@ -3,6 +3,10 @@ package ecommerce.shoestore.order;
 import ecommerce.shoestore.cart.Cart;
 import ecommerce.shoestore.cart.CartRepository;
 import ecommerce.shoestore.cartitem.CartItem;
+import ecommerce.shoestore.payment.Payment;
+import ecommerce.shoestore.payment.PaymentRepository;
+import ecommerce.shoestore.payment.PaymentTransaction;
+import ecommerce.shoestore.payment.PaymentTransactionRepository;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +24,9 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final CartRepository cartRepository;
     private final ShoesVariantRepository shoesVariantRepository;
+    private final PaymentRepository paymentRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
+    private final OrderAddressRepository orderAddressRepository;
     
     private static final BigDecimal SHIPPING_FEE = new BigDecimal("30000");
     
@@ -41,19 +48,41 @@ public class OrderService {
         // Tính totalAmount
         BigDecimal totalAmount = subTotal.add(SHIPPING_FEE).subtract(discountAmount);
         
+        // Lấy thông tin địa chỉ để điền recipient fields
+        OrderAddress address = orderAddressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại"));
+        
+        // Generate order code
+        String orderCode = "ORDER" + System.currentTimeMillis();
+        
         // Tạo Order
         Order order = new Order();
         order.setUserId(userId);
         order.setOrderAddressId(addressId);
         order.setRecipientEmail(recipientEmail);
+        order.setRecipientName(address.getRecipientName());
+        order.setRecipientPhone(address.getRecipientPhone());
+        order.setRecipientAddress(
+            address.getProvince() + ", " + 
+            address.getDistrict() + ", " + 
+            address.getCommune() + ", " + 
+            address.getStreetDetail()
+        );
         order.setSubTotal(subTotal);
         order.setShippingFee(SHIPPING_FEE);
         order.setDiscountAmount(discountAmount);
         order.setTotalAmount(totalAmount);
-        // Use payment method value directly from form (COD or TRANSFER)
         order.setPaymentMethod(paymentMethod);
+        order.setOrderCode(orderCode);
         order.setNote(note);
         order.setStatus("PENDING");
+        
+        // Set payment status based on payment method
+        if ("VNPAY".equals(paymentMethod)) {
+            order.setPaymentStatus("UNPAID");
+        } else {
+            order.setPaymentStatus("UNPAID");
+        }
         
         order = orderRepository.save(order);
         
@@ -72,6 +101,29 @@ public class OrderService {
             orderItem.setItemTotal(variant.getShoes().getBasePrice()
                     .multiply(BigDecimal.valueOf(item.getQuantity())));
             orderItemRepository.save(orderItem);
+        }
+        
+        // Tạo Payment và PaymentTransaction cho VNPay
+        if ("VNPAY".equals(paymentMethod)) {
+            // Tạo Payment record
+            Payment payment = new Payment();
+            payment.setOrderId(order.getOrderId());
+            payment.setAmount(totalAmount);
+            payment.setProvider("VNPAY");
+            payment.setCurrency("VND");
+            payment.setStatus("PENDING");
+            paymentRepository.save(payment);
+            
+            // Tạo PaymentTransaction record
+            PaymentTransaction transaction = new PaymentTransaction();
+            transaction.setOrderId(order.getOrderId());
+            transaction.setAmount(totalAmount);
+            transaction.setVnpTxnRef(String.valueOf(order.getOrderId()));
+            transaction.setPaymentMethod("VNPAY");
+            transaction.setStatus("PENDING");
+            paymentTransactionRepository.save(transaction);
+            
+            System.out.println("Created Payment and PaymentTransaction for VNPay order: " + order.getOrderId());
         }
         
         // Xóa cart
@@ -98,19 +150,41 @@ public class OrderService {
         // Tính totalAmount
         BigDecimal totalAmount = subTotal.add(SHIPPING_FEE).subtract(discountAmount);
         
+        // Lấy thông tin địa chỉ để điền recipient fields
+        OrderAddress address = orderAddressRepository.findById(addressId)
+                .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại"));
+        
+        // Generate order code
+        String orderCode = "ORDER" + System.currentTimeMillis();
+        
         // Tạo Order
         Order order = new Order();
         order.setUserId(userId);
         order.setOrderAddressId(addressId);
         order.setRecipientEmail(recipientEmail);
+        order.setRecipientName(address.getRecipientName());
+        order.setRecipientPhone(address.getRecipientPhone());
+        order.setRecipientAddress(
+            address.getProvince() + ", " + 
+            address.getDistrict() + ", " + 
+            address.getCommune() + ", " + 
+            address.getStreetDetail()
+        );
         order.setSubTotal(subTotal);
         order.setShippingFee(SHIPPING_FEE);
         order.setDiscountAmount(discountAmount);
         order.setTotalAmount(totalAmount);
-        // Use payment method value directly from form (COD or TRANSFER)
         order.setPaymentMethod(paymentMethod);
+        order.setOrderCode(orderCode);
         order.setNote(note);
         order.setStatus("PENDING");
+        
+        // Set payment status based on payment method
+        if ("VNPAY".equals(paymentMethod)) {
+            order.setPaymentStatus("UNPAID");
+        } else {
+            order.setPaymentStatus("UNPAID");
+        }
         
         order = orderRepository.save(order);
         
@@ -125,6 +199,29 @@ public class OrderService {
         orderItem.setShopDiscount(BigDecimal.ZERO);
         orderItem.setItemTotal(subTotal);
         orderItemRepository.save(orderItem);
+        
+        // Tạo Payment và PaymentTransaction cho VNPay
+        if ("VNPAY".equals(paymentMethod)) {
+            // Tạo Payment record
+            Payment payment = new Payment();
+            payment.setOrderId(order.getOrderId());
+            payment.setAmount(totalAmount);
+            payment.setProvider("VNPAY");
+            payment.setCurrency("VND");
+            payment.setStatus("PENDING");
+            paymentRepository.save(payment);
+            
+            // Tạo PaymentTransaction record
+            PaymentTransaction transaction = new PaymentTransaction();
+            transaction.setOrderId(order.getOrderId());
+            transaction.setAmount(totalAmount);
+            transaction.setVnpTxnRef(String.valueOf(order.getOrderId()));
+            transaction.setPaymentMethod("VNPAY");
+            transaction.setStatus("PENDING");
+            paymentTransactionRepository.save(transaction);
+            
+            System.out.println("Created Payment and PaymentTransaction for VNPay order: " + order.getOrderId());
+        }
         
         return order;
     }

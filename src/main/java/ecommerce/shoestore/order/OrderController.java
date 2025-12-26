@@ -4,10 +4,12 @@ import ecommerce.shoestore.auth.user.User;
 import ecommerce.shoestore.auth.user.UserRepository;
 import ecommerce.shoestore.cart.Cart;
 import ecommerce.shoestore.cart.CartRepository;
+import ecommerce.shoestore.payment.VNPayService;
 import ecommerce.shoestore.promotion.Voucher;
 import ecommerce.shoestore.promotion.VoucherRepository;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -30,6 +32,7 @@ public class OrderController {
     private final CartRepository cartRepository;
     private final ShoesVariantRepository shoesVariantRepository;
     private final VoucherRepository voucherRepository;
+    private final VNPayService vnPayService;
     
     /**
      * Hiển thị trang checkout
@@ -398,6 +401,7 @@ public class OrderController {
             @RequestParam String paymentMethod,
             @RequestParam(required = false) String voucherCode,
             HttpSession session,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
         
         System.out.println("\n===== CREATE ORDER REQUEST RECEIVED =====");
@@ -450,7 +454,38 @@ public class OrderController {
                 throw new RuntimeException("Loại đơn hàng không hợp lệ");
             }
             
-            // Xóa session shipping data
+            System.out.println("Order created successfully with ID: " + order.getOrderId());
+            
+            // Xử lý thanh toán VNPay
+            if ("VNPAY".equals(paymentMethod)) {
+                System.out.println("Redirecting to VNPay...");
+                
+                // Lấy IP address
+                String ipAddress = request.getRemoteAddr();
+                
+                // Tạo URL thanh toán VNPay
+                String vnpayUrl = vnPayService.createPaymentUrl(
+                    order.getOrderId(),
+                    user.getUserId(),
+                    order.getTotalAmount().longValue(),
+                    "Thanh toan don hang " + order.getOrderId(),
+                    ipAddress
+                );
+                
+                System.out.println("VNPay URL: " + vnpayUrl);
+                
+                // Xóa session shipping data
+                session.removeAttribute("SHIPPING_TYPE");
+                session.removeAttribute("SHIPPING_ADDRESS_ID");
+                session.removeAttribute("SHIPPING_RECIPIENT_EMAIL");
+                session.removeAttribute("SHIPPING_NOTE");
+                session.removeAttribute("SHIPPING_VARIANT_ID");
+                session.removeAttribute("SHIPPING_QUANTITY");
+                
+                return "redirect:" + vnpayUrl;
+            }
+            
+            // Xóa session shipping data cho COD/TRANSFER
             session.removeAttribute("SHIPPING_TYPE");
             session.removeAttribute("SHIPPING_ADDRESS_ID");
             session.removeAttribute("SHIPPING_RECIPIENT_EMAIL");
