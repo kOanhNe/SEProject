@@ -305,23 +305,30 @@
         submitFilter(true);
     }
 
+    function setSort(sortValue) {
+    document.getElementById("fSort").value = sortValue;
+    document.getElementById("fPage").value = 1; // đổi sort → về trang 1 (UX chuẩn)
+    document.getElementById("filterForm").submit();
+    }
+
+
 <!--    function setSort(value) {-->
 <!--        document.getElementById("fSort").value = value;-->
 <!--        submitFilter(true);-->
 <!--    }-->
-function setSort(sortValue) {
-    const params = new URLSearchParams(window.location.search);
+<!--function setSort(sortValue) {-->
+<!--    const params = new URLSearchParams(window.location.search);-->
 
-    // giữ nguyên page hiện tại
-    params.set("sort", sortValue);
+<!--    // giữ nguyên page hiện tại-->
+<!--    params.set("sort", sortValue);-->
 
-    // nếu chưa có page → mặc định 1
-    if (!params.has("page")) {
-        params.set("page", "1");
-    }
+<!--    // nếu chưa có page → mặc định 1-->
+<!--    if (!params.has("page")) {-->
+<!--        params.set("page", "1");-->
+<!--    }-->
 
-    window.location.search = params.toString();
-}
+<!--    window.location.search = params.toString();-->
+<!--}-->
 </script>
 
 <script>

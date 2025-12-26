@@ -7,10 +7,8 @@ import ecommerce.shoestore.shoes.dto.ShoesSummaryDto;
 import ecommerce.shoestore.shoesimage.ShoesImage;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantDto;
-import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;
 import ecommerce.shoestore.shoes.ShoesType;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +18,6 @@ import org.springframework.data.domain.Sort; // import để sắp xếp
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -273,6 +270,7 @@ public class ShoesService {
             maxPrice = null;
         }
 
+        // sold → chuyển sang query riêng
         if ("sold".equals(sort)) {
             return searchProductsWithSoldSort(
                     keyword,
@@ -302,25 +300,15 @@ public class ShoesService {
                 pageable
         );
 
-        List<Shoes> shoesList = pageResult.getContent();
-
-        Map<Long, Integer> stockMap = getStockMapForShoes(shoesList);
-
-        List<ShoesSummaryDto> dtos = shoesList.stream()
-                .map(shoes -> convertToSummaryDto(shoes, stockMap))
+        List<ShoesSummaryDto> dtos = pageResult.getContent().stream()
+                .map(this::convertToSummaryDto)
                 .toList();
-
 
         return ShoesListDto.builder()
                 .products(dtos)
                 .currentPage(page)
                 .totalPages(pageResult.getTotalPages())
                 .totalItems(pageResult.getTotalElements())
-                .totalSearchResults(
-                        kw != null && pageResult.getTotalElements() == 0
-                                ? 0
-                                : -1
-                )
                 .build();
     }
 
@@ -338,44 +326,44 @@ public class ShoesService {
         return PageRequest.of(page - 1, size, sortObj);
     }
 
-    @Transactional(readOnly = true)
-    public ShoesListDto searchProductsWithSoldSort(
-            String keyword,
-            Long categoryId,
-            String brand,
-            ShoesType shoesType,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            int page,
-            int size
-    ) {
-        Pageable pageable = PageRequest.of(page - 1, size);
+@Transactional(readOnly = true)
+public ShoesListDto searchProductsWithSoldSort(
+        String keyword,
+        Long categoryId,
+        String brand,
+        ShoesType shoesType,
+        BigDecimal minPrice,
+        BigDecimal maxPrice,
+        int page,
+        int size
+) {
+    Pageable pageable = PageRequest.of(page - 1, size);
 
-        String type = shoesType != null ? shoesType.name() : null;
-        String kw = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+    String type = shoesType != null ? shoesType.name() : null;
+    String kw = (keyword != null && !keyword.isBlank())
+            ? keyword.trim()
+            : null;
 
-        Page<Shoes> pageResult = shoesRepository.findBestSeller(
-                kw,
-                categoryId,
-                brand,
-                type,
-                minPrice,
-                maxPrice,
-                pageable
-        );
+    Page<Shoes> pageResult = shoesRepository.findBestSeller(
+            kw,
+            categoryId,
+            brand,
+            type,
+            minPrice,
+            maxPrice,
+            pageable
+    );
 
-        List<Shoes> shoesList = pageResult.getContent();
-        Map<Long, Integer> stockMap = getStockMapForShoes(shoesList);
+    List<ShoesSummaryDto> products = pageResult.getContent().stream()
+            .map(this::convertToSummaryDto)
+            .toList();
 
-        return ShoesListDto.builder()
-                .products(
-                        shoesList.stream()
-                                .map(s -> convertToSummaryDto(s, stockMap))
-                                .toList()
-                )
-                .currentPage(page)
-                .totalPages(pageResult.getTotalPages())
-                .totalItems(pageResult.getTotalElements())
-                .build();
-    }
+    return ShoesListDto.builder()
+            .products(products)
+            .currentPage(page)
+            .totalPages(pageResult.getTotalPages())
+            .totalItems(pageResult.getTotalElements())
+            .build();
+}
+
 }
