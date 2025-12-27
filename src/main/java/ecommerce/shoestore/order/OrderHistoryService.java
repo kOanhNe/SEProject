@@ -199,17 +199,41 @@ public class OrderHistoryService {
             OrderStatus orderStatus = OrderStatus.WAITING_CONFIRMATION; // Default value
             try {
                 if (trackingLog.getNewStatus() != null && !trackingLog.getNewStatus().trim().isEmpty()) {
-                    orderStatus = OrderStatus.valueOf(trackingLog.getNewStatus().toUpperCase().trim());
+                    String status = trackingLog.getNewStatus().toUpperCase().trim();
+                    // Map PENDING to WAITING_CONFIRMATION for enum compatibility
+                    if ("PENDING".equals(status)) {
+                        status = "WAITING_CONFIRMATION";
+                    }
+                    orderStatus = OrderStatus.valueOf(status);
                 }
             } catch (IllegalArgumentException e) {
                 System.err.println("WARNING: Invalid newStatus '" + trackingLog.getNewStatus() + 
                                  "' for tracking log " + trackingLog.getLogId() + ". Using default WAITING_CONFIRMATION");
             }
             
+            // Lấy fullname từ User table via userId
+            String customerName = "Customer"; // Default fallback
+            String customerEmail = order.getRecipientEmail() != null ? order.getRecipientEmail() : "customer@example.com";
+            
+            try {
+                if (order.getUserId() != null) {
+                    User user = userRepository.findById(order.getUserId()).orElse(null);
+                    if (user != null) {
+                        customerName = user.getFullname() != null ? user.getFullname() : "Customer";
+                        // Use actual user email if recipientEmail is null
+                        if (order.getRecipientEmail() == null) {
+                            customerEmail = user.getEmail();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Warning: Could not fetch user info for userId " + order.getUserId() + ": " + e.getMessage());
+            }
+            
             return OrderHistoryDto.builder()
                     .orderId(order.getOrderId())
-                    .customerName(order.getRecipientName() != null ? order.getRecipientName() : "Customer") 
-                    .customerEmail(order.getRecipientEmail() != null ? order.getRecipientEmail() : "customer@example.com")  
+                    .customerName(customerName) 
+                    .customerEmail(customerEmail)  
                     .createAt(trackingLog.getChangedAt()) // Sử dụng changedAt từ tracking log
                     .status(orderStatus) // Sử dụng newStatus từ tracking log
                     .statusDisplay(getVietnameseStatus(trackingLog.getNewStatus())) // Tiếng Việt
@@ -247,16 +271,40 @@ public class OrderHistoryService {
             OrderStatus orderStatus = OrderStatus.WAITING_CONFIRMATION; // Default value
             try {
                 if (order.getStatus() != null && !order.getStatus().trim().isEmpty()) {
-                    orderStatus = OrderStatus.valueOf(order.getStatus().toUpperCase().trim());
+                    String status = order.getStatus().toUpperCase().trim();
+                    // Map PENDING to WAITING_CONFIRMATION for enum compatibility
+                    if ("PENDING".equals(status)) {
+                        status = "WAITING_CONFIRMATION";
+                    }
+                    orderStatus = OrderStatus.valueOf(status);
                 }
             } catch (IllegalArgumentException e) {
                 System.err.println("WARNING: Invalid status '" + order.getStatus() + "' for order " + order.getOrderId() + ". Using default WAITING_CONFIRMATION");
             }
             
+            // Lấy fullname từ User table via userId
+            String customerName = "Customer"; // Default fallback
+            String customerEmail = order.getRecipientEmail() != null ? order.getRecipientEmail() : "customer@example.com";
+            
+            try {
+                if (order.getUserId() != null) {
+                    User user = userRepository.findById(order.getUserId()).orElse(null);
+                    if (user != null) {
+                        customerName = user.getFullname() != null ? user.getFullname() : "Customer";
+                        // Use actual user email if recipientEmail is null
+                        if (order.getRecipientEmail() == null) {
+                            customerEmail = user.getEmail();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Warning: Could not fetch user info for userId " + order.getUserId() + ": " + e.getMessage());
+            }
+            
             return OrderHistoryDto.builder()
                     .orderId(order.getOrderId())
-                    .customerName(order.getRecipientName() != null ? order.getRecipientName() : "Customer") 
-                    .customerEmail(order.getRecipientEmail() != null ? order.getRecipientEmail() : "customer@example.com")  
+                    .customerName(customerName)
+                    .customerEmail(customerEmail)  
                     .createAt(order.getCreateAt())
                     .status(orderStatus) // Sử dụng orderStatus đã xử lý
                     .subTotal(order.getSubTotal() != null ? order.getSubTotal() : BigDecimal.ZERO)
@@ -291,7 +339,7 @@ public class OrderHistoryService {
                 .newStatus(log.getNewStatus())
                 .oldStatusDisplay(getVietnameseStatus(log.getOldStatus())) // Tiếng Việt
                 .newStatusDisplay(getVietnameseStatus(log.getNewStatus())) // Tiếng Việt
-                .changeAt(log.getChangedAt())
+                .changedAt(log.getChangedAt())
                 .changedBy(log.getChangedBy())
                 .comment(log.getComment())
                 .build();

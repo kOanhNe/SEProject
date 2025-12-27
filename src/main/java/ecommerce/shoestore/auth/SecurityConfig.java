@@ -39,7 +39,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         http
                 .csrf(csrf -> csrf.disable())
                 .securityContext(context -> context
@@ -49,32 +48,33 @@ public class SecurityConfig {
                 // PUBLIC
                 .requestMatchers(
                         "/", "/index", "/shoes", "/product/**",
-                        "/auth/**", "/user/**", "/cart/**",
+                        "/auth/**", "/user/**", "/cart/**", "/order/**", "/vouchers/**",
                         "/css/**", "/js/**", "/images/**",
-                        "/error", "/api/search-suggestions", "/search/**", "/products","/order/**"
+                        "/error", "/api/search-suggestions", "/search/**", "/products"
                 ).permitAll()
                 // ADMIN
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                // Authentication required for other requests
                 .anyRequest().authenticated()
-                )
-                .formLogin(form -> form
+            )
+            .formLogin(form -> form
                 .loginPage("/auth/login")
                 .loginProcessingUrl("/j_spring_security_check")
                 .defaultSuccessUrl("/", true)
                 .failureUrl("/auth/login?error=true")
                 .permitAll()
-                )
-                .exceptionHandling(exception -> exception
+            )
+            .exceptionHandling(exception -> exception
                 .authenticationEntryPoint((request, response, authException) -> {
                     // Nếu chưa login và cố truy cập trang yêu cầu auth, redirect đến login
                     response.sendRedirect("/auth/login");
                 })
-                )
-                .logout(logout -> logout
+            )
+            .logout(logout -> logout
                 .logoutUrl("/auth/logout")
                 .logoutSuccessUrl("/auth/login?logout")
                 .permitAll()
-                );
+            );
 
         return http.build();
     }

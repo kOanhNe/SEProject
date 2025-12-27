@@ -17,7 +17,7 @@ public class OrderTrackingLogDto {
     private String newStatus;
     private String oldStatusDisplay; // Tiếng Việt
     private String newStatusDisplay; // Tiếng Việt
-    private LocalDateTime changeAt; // đổi từ changedAt thành changeAt
+    private LocalDateTime changedAt; // Match với database column
     private String changedBy;
     private String comment;
     
