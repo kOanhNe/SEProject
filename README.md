@@ -40,7 +40,7 @@ Spring Framework Ecosystem:
 - CSS3 (Style Sheet Language)
 - JavaScript (Client-side Scripting Language)
 - Thymeleaf (Server-side Template Engine)
-# Database
+### Database
 - PostgreSQL (hosted on Supabase)
 ## System Architecture
 - The system follows a layered architecture:
@@ -81,17 +81,25 @@ src/main/java/com/ecommerce/shoestore
 
 ```
 ---
+## Screenshots
 ### Homepage
+<img width="1919" height="924" alt="image" src="https://github.com/user-attachments/assets/30e826c5-aeb5-443e-9217-e5d92e54f10e" />
+<img width="1919" height="926" alt="image" src="https://github.com/user-attachments/assets/391c342d-cb05-4180-9556-dc48e23f32eb" />
 
 ### Product List
+<img width="1918" height="923" alt="image" src="https://github.com/user-attachments/assets/3fddd1cb-03a9-4668-b052-86d53bd4cd6c" />
 
 ### Product Detail
+<img width="1919" height="926" alt="image" src="https://github.com/user-attachments/assets/7fbcd955-4267-40e2-b72e-ebc39a44d4e1" />
 
 ### Cart Page
+<img width="1919" height="924" alt="image" src="https://github.com/user-attachments/assets/f288fcd5-3b1c-4a4d-bb81-130b200aa539" />
 
 ### Order Page
-
-
+<img width="1919" height="928" alt="image" src="https://github.com/user-attachments/assets/2e683402-ccfe-4117-9b5f-9a1895b7399a" />
+<img width="1919" height="928" alt="image" src="https://github.com/user-attachments/assets/c8af9686-7c5c-4fdc-9c77-bccfd6170b5f" />
+<img width="1917" height="914" alt="image" src="https://github.com/user-attachments/assets/e0f8da03-fde4-4838-b01e-414511ca33e2" />
+<img width="1919" height="925" alt="image" src="https://github.com/user-attachments/assets/70f83002-6ace-4a14-870b-d0ed6b593aa4" />
 
 ## How to run the project 
 ```bash
