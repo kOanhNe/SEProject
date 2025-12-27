@@ -18,7 +18,8 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-links">
-                <a class="nav-link" th:href="@{/}">Home</a> <a class="nav-link active" th:href="@{/cart}">Cart</a>
+                <a class="nav-link" th:href="@{/}">Home</a> 
+                <a class="nav-link active" th:href="@{/cart}">Cart</a>
             </div>
         </div>
     </nav>
@@ -62,14 +63,14 @@
                         <!-- CHECKBOX -->
                         <input type="checkbox"
                             class="cart-item-checkbox"
+                            name="selectedCartItemIds"
                             th:value="${item.cartItemId}"
-                            th:attr="data-price=${item.unitPrice}"
                             checked>
 
                         <!-- PRODUCT -->
                         <div class="cart-item-product">
                             <div class="cart-item-img">
-                                <a th:href="@{/product/{id}(id=${item.shoeId})}">
+                                <a th:href="@{/shoes/{id}(id=${item.shoeId})}">
                                     <img th:src="${item.imageUrl}"
                                          th:alt="${item.shoeName}">
                                 </a>
@@ -147,25 +148,29 @@
 
                 <div class="summary-row">
                     <span>Tạm tính</span>
-                    <span id="cart-subtotal"></span>
+                    <span id="summary-subtotal" th:text="${#numbers.formatDecimal(cartSubtotal, 0, 'POINT', 0, 'COMMA')} + '₫'"></span>
                 </div>
 
                 <div class="summary-row">
                     <span>Phí vận chuyển</span>
-                    <span id="cart-shipping"></span>
+                    <span id="summary-shipping" th:text="${#numbers.formatDecimal(cartShipping, 0, 'POINT', 0, 'COMMA')} + '₫'"></span>
                 </div>
 
                 <div class="summary-divider"></div>
 
                 <div class="summary-row total">
                     <span>Tổng cộng</span>
-                    <span id="cart-total"></span>
+                    <span id="summary-total" th:text="${#numbers.formatDecimal(cartTotal, 0, 'POINT', 0, 'COMMA')} + '₫'"></span>
                 </div>
 
-                <!-- CHECKOUT -->
-                <a th:href="@{/order/checkout(type='CART')}" class="btn-cart-primary w-100">
-                    <i class="fas fa-shopping-bag"></i> Đặt hàng
-                </a>
+                <!-- CHECKOUT FORM -->
+                <form id="checkout-form" th:action="@{/order/checkout}" method="get">
+                    <input type="hidden" name="type" value="CART">
+                    <input type="hidden" name="cartItemIds" id="selected-cart-item-ids" value="">
+                    <button type="submit" class="btn-cart-primary w-100" id="checkout-btn">
+                        <i class="fas fa-shopping-bag"></i> Đặt hàng
+                    </button>
+                </form>
 
                 <!-- CONTINUE SHOPPING -->
                 <a th:href="@{/}" class="btn-cart-secondary w-100">
@@ -181,49 +186,94 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const SHIPPING_FEE = 30000;
 
-    function formatVND(amount) {
-        return amount.toLocaleString('vi-VN') + '₫';
+    // ============ FUNCTION: Format number with thousand separator ============
+    function formatCurrency(value) {
+        return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "₫";
     }
 
-    function calculateSummary() {
+    // ============ FUNCTION: Calculate and update summary ============
+    function updateSummary() {
+        const checkboxes = document.querySelectorAll(".cart-item-checkbox");
         let subtotal = 0;
+        let selectedCount = 0;
 
-        document.querySelectorAll(".cart-item-checkbox:checked")
-            .forEach(cb => {
-                const row = cb.closest(".cart-item-row");
-                const price = parseInt(cb.dataset.price);
-                const quantity = parseInt(
-                    row.querySelector(".qty-input-cart").value
-                );
-                subtotal += price * quantity;
-            });
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const row = checkbox.closest(".cart-item-row");
+                const totalText = row.querySelector(".cart-item-total span").textContent;
+                // Remove '₫' and '.' to parse the number
+                const itemTotal = parseFloat(totalText.replace(/[₫.]/g, ""));
+                subtotal += itemTotal;
+                selectedCount++;
+            }
+        });
 
-        const shipping = subtotal > 0 ? SHIPPING_FEE : 0;
+        const shipping = selectedCount > 0 ? SHIPPING_FEE : 0;
         const total = subtotal + shipping;
 
-        document.getElementById("cart-subtotal").innerText = formatVND(subtotal);
-        document.getElementById("cart-shipping").innerText = formatVND(shipping);
-        document.getElementById("cart-total").innerText = formatVND(total);
+        // Update the summary display
+        document.getElementById("summary-subtotal").textContent = formatCurrency(subtotal);
+        document.getElementById("summary-shipping").textContent = formatCurrency(shipping);
+        document.getElementById("summary-total").textContent = formatCurrency(total);
     }
 
-    document.querySelectorAll(".cart-item-checkbox")
-        .forEach(cb => cb.addEventListener("change", calculateSummary));
+    // ============ EVENT: Listen to checkbox changes ============
+    document.querySelectorAll(".cart-item-checkbox").forEach(checkbox => {
+        checkbox.addEventListener("change", updateSummary);
+    });
 
+    // ============ EVENT: Handle checkout form submission ============
+    document.getElementById("checkout-form").addEventListener("submit", function(e) {
+        const checkboxes = document.querySelectorAll(".cart-item-checkbox:checked");
+        
+        console.log("=== CHECKOUT FORM SUBMIT ===");
+        console.log("Number of checked items:", checkboxes.length);
+        
+        if (checkboxes.length === 0) {
+            e.preventDefault();
+            alert("Vui lòng chọn ít nhất một sản phẩm để đặt hàng!");
+            return false;
+        }
+
+        // Collect selected cart item IDs
+        const selectedIds = Array.from(checkboxes).map(cb => {
+            console.log("Selected checkbox value:", cb.value);
+            return cb.value;
+        }).join(",");
+        
+        console.log("Selected IDs string:", selectedIds);
+        document.getElementById("selected-cart-item-ids").value = selectedIds;
+        console.log("Hidden input value set to:", document.getElementById("selected-cart-item-ids").value);
+    });
+
+    // ============ EVENT: Handle decrease button (delete confirmation) ============
     document.querySelectorAll(".btn-decrease").forEach(btn => {
         btn.addEventListener("click", function (e) {
+
             const qty = parseInt(btn.dataset.qty);
+
+            // Nếu còn 1 sản phẩm mà bấm "-"
             if (qty === 1) {
-                e.preventDefault();
-                if (confirm("Bạn có muốn xóa sản phẩm khỏi giỏ hàng không?")) {
-                    btn.closest(".cart-item-row")
-                        .querySelector(".cart-item-remove form")
-                        .submit();
+                e.preventDefault(); // chặn submit form update
+
+                const confirmDelete = confirm(
+                    "Bạn có muốn xóa sản phẩm khỏi giỏ hàng không?"
+                );
+
+                if (confirmDelete) {
+                    // submit form remove cùng dòng
+                    const row = btn.closest(".cart-item-row");
+                    const removeForm = row.querySelector(".cart-item-remove form");
+                    removeForm.submit();
                 }
+                // Cancel → không làm gì
             }
         });
     });
 
-    calculateSummary();
+    // Initialize summary on page load
+    updateSummary();
+
 });
 </script>
 
