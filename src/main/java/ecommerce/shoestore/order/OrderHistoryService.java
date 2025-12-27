@@ -301,7 +301,7 @@ public class OrderHistoryService {
                 .newStatus(log.getNewStatus())
                 .oldStatusDisplay(getVietnameseStatus(log.getOldStatus())) // Tiếng Việt
                 .newStatusDisplay(getVietnameseStatus(log.getNewStatus())) // Tiếng Việt
-                .changeAt(log.getChangedAt())
+                .changedAt(log.getChangedAt())
                 .changedBy(log.getChangedBy())
                 .comment(log.getComment())
                 .build();
