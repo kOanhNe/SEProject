@@ -29,13 +29,13 @@ The project focuses on applying software engineering principles, including layer
 7. Database-driven product & order management
 
 ## Technology Stack
-# Backend
+### Backend
 Programing Language: Java
 Spring Framework Ecosystem:
 - Spring Boot
 - Spring MVC
 - Spring Data JPA
-# Frontend
+### Frontend
 - HTML5 (Markup Language)
 - CSS3 (Style Sheet Language)
 - JavaScript (Client-side Scripting Language)
@@ -81,15 +81,15 @@ src/main/java/com/ecommerce/shoestore
 
 ```
 ---
-# Homepage
+### Homepage
 
-# Product List
+### Product List
 
-# Product Detail
+### Product Detail
 
-# Cart Page
+### Cart Page
 
-# Order Page
+### Order Page
 
 
 
