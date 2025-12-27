@@ -295,10 +295,10 @@ public class OrderService {
     Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng ID: " + orderId));
     
-    if (order.getStatus() == OrderStatus.CANCELED) {
+    if (order.getStatus() == OrderStatus.CANCELLED) {
         throw new RuntimeException("Đơn hàng đã bị huỷ, không thể cập nhật!");
     }
-    if (order.getStatus() == OrderStatus.COMPLETE_DELIVERY) {
+    if (order.getStatus() == OrderStatus.COMPLETED) {
         throw new RuntimeException("Đã giao thành công!");
     }
     

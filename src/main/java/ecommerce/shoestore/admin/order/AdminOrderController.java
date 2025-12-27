@@ -23,17 +23,17 @@ public class AdminOrderController {
     @GetMapping
     public String showOrderList(Model model, 
                                 @RequestParam(defaultValue = "0") int page,
-                                @RequestParam(defaultValue = "10") int size) {
-        
+                                @RequestParam(defaultValue = "10") int size,
+                                @RequestParam(required = false) String status) {
         // 1. Lấy dữ liệu phân trang từ Service
-        Page<OrderHistoryDto> orderPage = orderHistoryService.getAllOrders(page, size);
+        Page<OrderHistoryDto> orderPage = orderHistoryService.getAllOrders(status,page, size);
         
         // 2. Đưa dữ liệu ra HTML
         model.addAttribute("orders", orderPage.getContent()); // Danh sách đơn
         model.addAttribute("totalPages", orderPage.getTotalPages());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalElements", orderPage.getTotalElements()); // Tổng số đơn
-        
+        model.addAttribute("currentStatus", status != null ? status : "ALL");
         model.addAttribute("activeMenu", "orders");
         
         // Trả về file HTML mới (đẹp hơn)
@@ -50,6 +50,6 @@ public class AdminOrderController {
         } catch (Exception e) {
             System.err.println("Lỗi cập nhật trạng thái: " + e.getMessage());
         }
-        return "redirect:/orders";
+        return "redirect:/admin/orders";
     }
 }

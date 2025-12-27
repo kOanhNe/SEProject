@@ -42,14 +42,14 @@ public class OrderHistoryService {
         
         try {
             // Chấp nhận cả String thường và Enum name
-            OrderStatus status = OrderStatus.valueOf(statusStr.toUpperCase().trim());
+            String statusUpper = statusStr.toUpperCase().trim();
             
-            switch (status) {
-                case PENDING:   return "Chờ xử lý";
-                case CONFIRMED: return "Đã xác nhận";
-                case SHIPPING:  return "Đang giao hàng";
-                case COMPLETED: return "Hoàn thành";
-                case CANCELED:  return "Đã hủy";
+            switch (statusUpper) {
+                case "PENDING":   return "Chờ xử lý";
+                case "CONFIRMED": return "Đã xác nhận";
+                case "SHIPPING":  return "Đang giao hàng";
+                case "COMPLETED": return "Hoàn thành";
+                case "CANCELLED":  return "Đã hủy";
                 default:        return statusStr;
             }
         } catch (Exception e) {
@@ -64,14 +64,14 @@ public class OrderHistoryService {
     private String getStatusColorClass(String statusStr) {
         if (statusStr == null) return "secondary";
         try {
-            OrderStatus status = OrderStatus.valueOf(statusStr.toUpperCase().trim());
-            
-            switch (status) {
-                case PENDING:   return "warning text-dark"; // Màu vàng
-                case CONFIRMED: return "info text-dark";    // Màu xanh dương nhạt
-                case SHIPPING:  return "primary"; // Màu xanh dương đậm
-                case COMPLETED: return "success"; // Màu xanh lá
-                case CANCELED:  return "danger";  // Màu đỏ
+            String statusUpper = statusStr.toUpperCase().trim();
+
+            switch (statusUpper) {
+                case "PENDING":   return "warning text-dark"; // Màu vàng
+                case "CONFIRMED": return "info text-dark";    // Màu xanh dương nhạt
+                case "SHIPPING":  return "primary"; // Màu xanh dương đậm
+                case "COMPLETED": return "success"; // Màu xanh lá
+                case "CANCELLED":  return "danger";  // Màu đỏ
                 default:        return "secondary";
             }
         } catch (Exception e) {
@@ -189,10 +189,21 @@ public class OrderHistoryService {
     /**
      * Lấy tất cả đơn hàng (cho admin)
      */
-    public Page<OrderHistoryDto> getAllOrders(int page, int size) {
+    public Page<OrderHistoryDto> getAllOrders(String statusStr, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Order> orders = orderRepository.findAll(pageable);
-        
+        Page<Order> orders;
+        if (statusStr == null || statusStr.trim().isEmpty() || statusStr.equals("ALL")) {
+            orders = orderRepository.findAll(pageable);
+        } else {
+            try {
+                // Chuyển String sang Enum
+                OrderStatus status = OrderStatus.valueOf(statusStr.toUpperCase().trim());
+                orders = orderRepository.findByStatus(status, pageable);
+            } catch (IllegalArgumentException e) {
+                // Nếu status sai -> Lấy tất cả (fallback)
+                orders = orderRepository.findAll(pageable);
+            }
+        }
         return orders.map(this::convertToHistoryDto);
     }
     

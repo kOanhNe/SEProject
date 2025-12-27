@@ -37,7 +37,7 @@ public class OrderHistoryDto {
             case CONFIRMED: return "Đã xác nhận";
             case SHIPPING: return "Đang giao hàng";
             case COMPLETED: return "Giao hàng thành công";
-            case CANCELED: return "Đã hủy";
+            case CANCELLED: return "Đã hủy";
             default: return status.name();
         }
     }
@@ -50,7 +50,7 @@ public class OrderHistoryDto {
             case CONFIRMED: return "Đã xác nhận";
             case SHIPPING: return "Đang giao hàng";
             case COMPLETED: return "Giao hàng thành công";
-            case CANCELED: return "Đã hủy";
+            case CANCELLED: return "Đã hủy";
             default: return status.name();
         }
     }

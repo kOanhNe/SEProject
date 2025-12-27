@@ -6,23 +6,16 @@
     <title>Quản lý đơn hàng | WebShoe Admin</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-    <!-- Thêm icon Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <link rel="stylesheet" th:href="@{/css/admin.css}"/>
-    <link rel="stylesheet" th:href="@{/css/inventory.css}"/> <!-- Tận dụng CSS inventory cho đẹp -->
+    <link rel="stylesheet" th:href="@{/css/inventory.css}"/>
     <link rel="stylesheet" th:href="@{/css/common.css}"/>
     
     <style>
-        /* CSS riêng cho trang Order để đẹp hơn */
         .stat-card {
-            border: none;
-            border-radius: 12px;
-            padding: 20px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: none; border-radius: 12px; padding: 20px; color: white;
+            position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             transition: transform 0.2s;
         }
         .stat-card:hover { transform: translateY(-5px); }
@@ -63,41 +56,29 @@
 
         <main class="page-content">
             
-            <!-- 1. THỐNG KÊ NHANH (Phần thêm mới cho đẹp) -->
+            <!-- 1. THỐNG KÊ NHANH -->
             <div class="row g-4 mb-4">
                 <div class="col-md-3">
                     <div class="stat-card bg-gradient-primary">
-                        <div>
-                            <p>Tổng đơn hàng</p>
-                            <h3 th:text="${totalElements}">0</h3>
-                        </div>
+                        <div><p>Tổng đơn hàng</p><h3 th:text="${totalElements}">0</h3></div>
                         <i class="bi bi-receipt stat-icon"></i>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card bg-gradient-warning">
-                        <div>
-                            <p>Chờ xác nhận</p>
-                            <h3>--</h3> <!-- Sau này bind data vào đây -->
-                        </div>
+                        <div><p>Chờ xử lý</p><h3>--</h3></div>
                         <i class="bi bi-hourglass-split stat-icon"></i>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card bg-gradient-success">
-                        <div>
-                            <p>Hoàn thành</p>
-                            <h3>--</h3>
-                        </div>
+                        <div><p>Hoàn thành</p><h3>--</h3></div>
                         <i class="bi bi-check-circle stat-icon"></i>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card bg-gradient-danger">
-                        <div>
-                            <p>Đã hủy</p>
-                            <h3>--</h3>
-                        </div>
+                        <div><p>Đã hủy</p><h3>--</h3></div>
                         <i class="bi bi-x-circle stat-icon"></i>
                     </div>
                 </div>
@@ -110,11 +91,20 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="mb-0 fw-bold text-secondary">📦 Danh sách chi tiết</h5>
                     <div class="d-flex gap-2">
-                        <form class="d-flex search-group" style="max-width: 300px;">
-                            <input class="form-control me-2" type="search" placeholder="Tìm theo Mã ĐH, Tên KH..." aria-label="Search">
-                            <button class="btn btn-outline-primary" type="submit">Tìm</button>
-                        </form>
-                        <button class="btn btn-outline-secondary"><i class="bi bi-funnel"></i> Lọc</button>
+                        <!-- Bộ lọc trạng thái (MỚI THÊM) -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-funnel"></i> 
+                                <span th:text="${currentStatus == 'ALL' ? 'Tất cả trạng thái' : currentStatus}">Lọc</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='ALL')}">Tất cả</a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='PENDING')}">🟡 Chờ xác nhận</a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='SHIPPING')}">🔵 Đang giao</a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='COMPLETED')}">🟢 Hoàn thành</a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='CANCELLED')}">🔴 Đã hủy</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -136,16 +126,14 @@
                             <tr th:if="${orders == null || orders.isEmpty()}">
                                 <td colspan="6" class="text-center py-5">
                                     <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
-                                    <p class="text-muted">Chưa có đơn hàng nào trong hệ thống.</p>
+                                    <p class="text-muted">Chưa có đơn hàng nào.</p>
                                 </td>
                             </tr>
 
                             <!-- Lặp dữ liệu -->
                             <tr th:each="order : ${orders}">
                                 <td>
-                                    <a href="#" class="fw-bold text-decoration-none text-primary">
-                                        #<span th:text="${order.orderId}">101</span>
-                                    </a>
+                                    <span class="fw-bold text-primary">#<span th:text="${order.orderId}"></span></span>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
@@ -163,7 +151,7 @@
                                 </td>
                                 
                                 <td class="text-center">
-                                    <!-- Badge màu sắc -->
+                                    <!-- Badge màu sắc (Đã sửa bg- để khớp logic Service) -->
                                     <span class="badge rounded-pill" 
                                           th:classappend="'bg-' + ${order.statusColorClass}"
                                           th:text="${order.statusDisplay}">
@@ -177,50 +165,53 @@
 
                                 <td class="text-end">
                                     <div class="btn-group">
+                                        <!-- Nút Xem chi tiết (Chưa có link) -->
                                         <a href="#" class="btn btn-sm btn-light border" title="Xem chi tiết">
                                             <i class="bi bi-eye"></i>
                                         </a>
+                                        
+                                        <!-- Nút Dropdown Hành Động -->
                                         <button type="button" class="btn btn-sm btn-light border dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
                                             <span class="visually-hidden">Toggle Dropdown</span>
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <!-- Cập nhật nhanh trạng thái -->
+                                        
+                                        <ul class="dropdown-menu dropdown-menu-end shadow">
                                             <li><h6 class="dropdown-header">Cập nhật trạng thái</h6></li>
                                             
+                                            <!-- 1. PENDING -> CONFIRMED -->
                                             <li th:if="${order.status.name() == 'PENDING'}">
                                                 <form th:action="@{/admin/orders/update-status}" method="post">
                                                     <input type="hidden" name="orderId" th:value="${order.orderId}">
                                                     <input type="hidden" name="newStatus" value="CONFIRMED">
-                                                    <button class="dropdown-item text-primary"><i class="bi bi-check-lg"></i> Xác nhận</button>
+                                                    <button class="dropdown-item text-primary"><i class="bi bi-check-lg"></i> Xác nhận đơn</button>
                                                 </form>
                                             </li>
-                                            
-                                            <li>
-                                                <form th:action="@{/admin/orders/update-status}" method="post">
-                                                    <input type="hidden" name="orderId" th:value="${order.orderId}">
-                                                    <input type="hidden" name="newStatus" value="CANCELLED">
-                                                    <button class="dropdown-item text-danger"><i class="bi bi-x-circle"></i> Hủy đơn</button>
-                                                </form>
-                                            </li>
+
+                                            <!-- 2. CONFIRMED -> SHIPPING -->
                                             <li th:if="${order.status.name() == 'CONFIRMED'}">
                                                 <form th:action="@{/admin/orders/update-status}" method="post">
                                                     <input type="hidden" name="orderId" th:value="${order.orderId}">
-                                                    <input type="hidden" name="newStatus" value="SHIPPING"> <!-- Gửi SHIPPING -->
+                                                    <input type="hidden" name="newStatus" value="SHIPPING">
                                                     <button class="dropdown-item text-info"><i class="bi bi-truck"></i> Bắt đầu giao</button>
                                                 </form>
                                             </li>
+
+                                            <!-- 3. SHIPPING -> COMPLETED -->
                                             <li th:if="${order.status.name() == 'SHIPPING'}">
                                                 <form th:action="@{/admin/orders/update-status}" method="post">
                                                     <input type="hidden" name="orderId" th:value="${order.orderId}">
-                                                    <input type="hidden" name="newStatus" value="COMPLETED"> <!-- Gửi COMPLETED -->
+                                                    <input type="hidden" name="newStatus" value="COMPLETED">
                                                     <button class="dropdown-item text-success"><i class="bi bi-check-circle-fill"></i> Giao thành công</button>
                                                 </form>
                                             </li>
+                                            
                                             <li><hr class="dropdown-divider"></li>
-                                            <li th:if="${order.status.name() != 'COMPLETED' && order.status.name() != 'CANCELED'}">
+                                            
+                                            <!-- 4. HỦY ĐƠN (Luôn hiện trừ khi đã Xong/Hủy) -->
+                                            <li th:if="${order.status.name() != 'COMPLETED' && order.status.name() != 'CANCELLED'}">
                                                 <form th:action="@{/admin/orders/update-status}" method="post">
                                                     <input type="hidden" name="orderId" th:value="${order.orderId}">
-                                                    <input type="hidden" name="newStatus" value="CANCELED"> <!-- Gửi CANCELED -->
+                                                    <input type="hidden" name="newStatus" value="CANCELLED">
                                                     <button class="dropdown-item text-danger" onclick="return confirm('Hủy đơn này?');"><i class="bi bi-x-circle"></i> Hủy đơn</button>
                                                 </form>
                                             </li>
@@ -235,10 +226,13 @@
                 <!-- Phân trang -->
                 <nav th:if="${totalPages > 1}" class="mt-4">
                     <ul class="pagination justify-content-center">
-                        <li class="page-item disabled"><a class="page-link" href="#">Trước</a></li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage - 1}, status=${currentStatus})}">Trước</a>
+                        </li>
+                        <li class="page-item active"><span class="page-link" th:text="${currentPage + 1}">1</span></li>
+                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage + 1}, status=${currentStatus})}">Sau</a>
+                        </li>
                     </ul>
                 </nav>
 
