@@ -7,7 +7,7 @@ import ecommerce.shoestore.cart.CartRepository;
 import ecommerce.shoestore.cartitem.CartItem;
 import ecommerce.shoestore.promotion.CustomerPromotionService;
 import ecommerce.shoestore.payment.VNPayService;
-import ecommerce.shoestore.promotion.Voucher;
+import ecommerce.shoestore.promotion.VoucherRepository;
 import ecommerce.shoestore.promotion.dto.VoucherValidationResult;
 import ecommerce.shoestore.shoesvariant.ShoesVariant;
 import ecommerce.shoestore.shoesvariant.ShoesVariantRepository;

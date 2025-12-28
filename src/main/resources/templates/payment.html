@@ -21,6 +21,8 @@
             padding: 2rem;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 2;
         }
         
         .checkout-summary {
@@ -31,6 +33,7 @@
             height: fit-content;
             position: sticky;
             top: 2rem;
+            z-index: 0;
         }
         
         .form-section {
@@ -148,6 +151,9 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            pointer-events: auto;
+            position: relative;
+            z-index: 2;
         }
         
         .payment-method:hover {
@@ -246,6 +252,10 @@
             font-weight: 600;
             cursor: pointer;
             margin-top: 1.5rem;
+            position: sticky;
+            bottom: 0;
+            z-index: 3;
+            box-shadow: 0 -6px 12px rgba(0,0,0,0.06);
         }
         
         .btn-submit:hover {
