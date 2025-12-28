@@ -618,12 +618,12 @@
                             </div>
                         </div>
                         
-                        <div class="payment-method" onclick="selectPayment('TRANSFER', this)" id="payment-transfer">
-                            <input type="radio" name="paymentMethod" value="TRANSFER" id="radio-transfer" required>
-                            <img th:src="@{/images/vnpay.jpg}" alt="Chuyển khoản" class="payment-method-icon">
+                        <div class="payment-method" onclick="selectPayment('VNPAY', this)" id="payment-vnpay">
+                            <input type="radio" name="paymentMethod" value="VNPAY" id="radio-vnpay" required>
+                            <img th:src="@{/images/vnpay.jpg}" alt="VNPay" class="payment-method-icon">
                             <div class="payment-method-info">
-                                <div class="payment-method-name">Chuyển khoản ngân hàng</div>
-                                <div class="payment-method-desc">Chuyển khoản qua tài khoản ngân hàng</div>
+                                <div class="payment-method-name">Thanh toán VNPay</div>
+                                <div class="payment-method-desc">Thanh toán trực tuyến qua cổng VNPay (ATM, Visa, MasterCard, QR Code) </div>
                             </div>
                         </div>
                     </div>
@@ -786,6 +786,7 @@
     </div>
     
     <script th:inline="javascript">
+
         const subtotal = [[${subtotal}]];
         const shipping = [[${shipping}]];
         let currentDiscount = 0;
@@ -810,6 +811,10 @@
                 });
             });
         });
+        /*<![CDATA[*/
+        const subtotal = /*[[${subtotal}]]*/ 0;
+        const shipping = /*[[${shipping}]]*/ 0;
+        /*]]*/
         
         function selectPayment(method, element) {
             document.querySelectorAll('.payment-method').forEach(item => {
