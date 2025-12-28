@@ -470,7 +470,7 @@
             <!-- Đặt hàng từ giỏ -->
             <div th:if="${type == 'CART'}">
                 <div th:each="item : ${cartItems}" class="summary-item">
-                    <img th:src="@{${!item.variant.shoes.images.empty ? item.variant.shoes.images.iterator().next().url : '/images/no-image.png'}}" 
+                    <img src="https://via.placeholder.com/150" 
                          th:alt="${item.variant.shoes.name}">
                     <div class="summary-item-info">
                         <div class="summary-item-name" th:text="${item.variant.shoes.name}"></div>

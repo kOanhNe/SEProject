@@ -738,8 +738,9 @@
             <!-- Đặt hàng từ giỏ -->
             <div th:if="${type == 'CART'}">
                 <div th:each="item : ${cartItems}" class="summary-item">
-                    <img th:src="@{${!item.variant.shoes.images.empty ? item.variant.shoes.images.iterator().next().url : '/images/no-image.png'}}" 
-                         th:alt="${item.variant.shoes.name}">
+                    <img th:src="@{data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlNob2UgSW1hZ2U8L3RleHQ+PC9zdmc+}" 
+                         th:alt="${item.variant.shoes.name}"
+                         style="width: 80px; height: 80px; object-fit: cover;">
                     <div class="summary-item-info">
                         <div class="summary-item-name" th:text="${item.variant.shoes.name}"></div>
                         <div class="summary-item-variant">
@@ -757,8 +758,9 @@
             <!-- Mua ngay -->
             <div th:if="${type == 'BUY_NOW'}">
                 <div class="summary-item">
-                    <img th:src="@{${!variant.shoes.images.empty ? variant.shoes.images.iterator().next().url : '/images/no-image.png'}}" 
-                         th:alt="${variant.shoes.name}">
+                    <img th:src="${variantImageUrl}" 
+                         th:alt="${variant.shoes.name}"
+                         style="width: 80px; height: 80px; object-fit: cover;">
                     <div class="summary-item-info">
                         <div class="summary-item-name" th:text="${variant.shoes.name}"></div>
                         <div class="summary-item-variant">
@@ -796,23 +798,58 @@
     </div>
     
     <script th:inline="javascript">
-
-        const subtotal = [[${subtotal}]];
-        const shipping = [[${shipping}]];
+        /*<![CDATA[*/
+        const subtotal = /*[[${subtotal}]]*/ 0;
+        const shipping = /*[[${shipping}]]*/ 0;
         let currentDiscount = 0;
         
         console.log('Payment page loaded. Subtotal:', subtotal, 'Shipping:', shipping);
         
-        // Khởi tạo event listeners khi DOM đã sẵn sàng
+        function selectPayment(method, element) {
+            console.log('Selecting payment method:', method);
+            document.querySelectorAll('.payment-method').forEach(item => {
+                item.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            const radioId = 'radio-' + method.toLowerCase();
+            const radioElement = document.getElementById(radioId);
+            if (radioElement) {
+                radioElement.checked = true;
+                console.log('Radio button checked:', radioId);
+            } else {
+                console.error('Radio button not found:', radioId);
+            }
+        }
+        
+        // Initialize event listeners when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
-            // Thêm click event cho tất cả voucher items
+            // Form submit validation
+            const form = document.getElementById('paymentForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    console.log('===== FORM SUBMIT STARTED =====');
+                    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+                    
+                    if (!paymentMethod) {
+                        alert('Vui lòng chọn phương thức thanh toán');
+                        e.preventDefault();
+                        return false;
+                    }
+                    
+                    console.log('Selected payment method:', paymentMethod.value);
+                    console.log('Form action:', form.action);
+                    console.log('Form method:', form.method);
+                    console.log('Form submitting...');
+                });
+            }
+            
+            // Voucher item click handlers
             document.querySelectorAll('.voucher-item').forEach(function(item) {
                 item.addEventListener('click', function() {
                     const isApplicable = this.getAttribute('data-applicable') === 'true';
                     if (isApplicable) {
                         selectVoucher(this);
                     } else {
-                        // Hiển thị thông báo khi click vào voucher không khả dụng
                         const reason = this.querySelector('.not-applicable span');
                         if (reason) {
                             showVoucherMessage(reason.textContent, 'error');
@@ -821,18 +858,6 @@
                 });
             });
         });
-        /*<![CDATA[*/
-        const subtotal = /*[[${subtotal}]]*/ 0;
-        const shipping = /*[[${shipping}]]*/ 0;
-        /*]]*/
-        
-        function selectPayment(method, element) {
-            document.querySelectorAll('.payment-method').forEach(item => {
-                item.classList.remove('selected');
-            });
-            element.classList.add('selected');
-            document.getElementById('radio-' + method.toLowerCase()).checked = true;
-        }
         
         function selectVoucher(element) {
             const code = element.getAttribute('data-code');
