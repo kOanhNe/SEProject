@@ -51,7 +51,6 @@ public class ShoesController {
     @GetMapping("/product/{shoeId}")
     public String productDetail(@PathVariable Long shoeId, Model model) {
         // Session attributes được tự động thêm bởi SessionModelAdvice
-
         ShoesDetailDto product = shoesService.getShoesDetail(shoeId);
         model.addAttribute("product", product);
         
