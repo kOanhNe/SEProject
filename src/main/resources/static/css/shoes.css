@@ -923,3 +923,53 @@
     align-items: center;
     justify-content: center;
 }
+
+/* Reviews Section Styling */
+.review-summary-box {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 40px;
+}
+
+.rating-score {
+    font-size: 48px;
+    font-weight: 700;
+    color: #333;
+}
+
+.stars-display i {
+    color: #ffc107;
+    font-size: 1.2rem;
+}
+
+.stars-display i.far {
+    color: #ddd; /* Sao rỗng */
+}
+
+.review-item {
+    border-bottom: 1px solid #eee;
+    padding: 20px 0;
+}
+
+.review-user {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.review-date {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.review-comment {
+    margin-top: 10px;
+    color: #444;
+    line-height: 1.6;
+}
+
+.empty-review {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}

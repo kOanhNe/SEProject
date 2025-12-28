@@ -54,3 +54,7 @@
     width: 25px;
     text-align: center;
 }
+header, .navbar {
+    position: relative;
+    z-index: 1055 !important; /* Bootstrap Modal thường là 1050, ta đặt cao hơn chút để an toàn */
+}

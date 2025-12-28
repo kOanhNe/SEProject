@@ -2,49 +2,56 @@ package ecommerce.shoestore.order;
 
 import ecommerce.shoestore.auth.account.UserRole;
 import ecommerce.shoestore.order.dto.OrderHistoryDto;
+import ecommerce.shoestore.review.ReviewRepository;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/order")
+@RequiredArgsConstructor
 public class OrderHistoryController {
-    
-    @Autowired
-    private OrderHistoryService orderHistoryService;
-    
+
+    private final OrderHistoryService orderHistoryService;
+    private final ReviewRepository reviewRepository;
+
     /**
      * Hiển thị lịch sử đơn hàng của customer
      */
+    // Đừng quên Inject ReviewRepository vào Constructor của Controller này
     @GetMapping("/history")
     public String showOrderHistory(@RequestParam(defaultValue = "0") int page,
-                                  @RequestParam(defaultValue = "10") int size,
-                                  HttpSession session, Model model) {
-        
-        // Lấy userId từ session
+                                   @RequestParam(defaultValue = "10") int size,
+                                   HttpSession session, Model model) {
+
         Long userId = (Long) session.getAttribute("USER_ID");
         if (userId == null) {
-            // Nếu không có USER_ID trong session, redirect về login
             return "redirect:/auth/login";
         }
-        
-        // Nạp thông tin Header (giống UserController)
+
         model.addAttribute("isLoggedIn", true);
         model.addAttribute("fullname", session.getAttribute("FULLNAME"));
         model.addAttribute("role", session.getAttribute("ROLE"));
-        
+
         try {
-            // Debug: Log userId để check
-            System.out.println("DEBUG: Looking for orders with userId: " + userId);
-            
             Page<OrderHistoryDto> orderHistory = orderHistoryService.getCustomerOrderHistory(userId, page, size);
-            
-            // Debug: Log số lượng orders
-            System.out.println("DEBUG: Found " + orderHistory.getTotalElements() + " orders");
-            
+
+            // --- PHẦN LOGIC MỚI THÊM VÀO ---
+            // Lấy danh sách ID của các đơn hàng trong trang hiện tại đã được đánh giá
+            List<Long> reviewedOrderIds = orderHistory.getContent().stream()
+                    .map(OrderHistoryDto::getOrderId) // Giả định OrderHistoryDto có getOrderId()
+                    .filter(id -> reviewRepository.existsByOrderItem_OrderId(id))
+                    .collect(java.util.stream.Collectors.toList());
+
+            model.addAttribute("reviewedOrderIds", reviewedOrderIds);
+            // ------------------------------
+
             model.addAttribute("orders", orderHistory.getContent());
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages", orderHistory.getTotalPages());
@@ -52,17 +59,17 @@ public class OrderHistoryController {
             model.addAttribute("hasNext", orderHistory.hasNext());
             model.addAttribute("hasPrevious", orderHistory.hasPrevious());
             model.addAttribute("hasOrders", !orderHistory.getContent().isEmpty());
-            
+
             return "order/order-history";
-            
+
         } catch (Exception e) {
-            // Handle error gracefully - chỉ hiện empty state, không hiện lỗi
             model.addAttribute("orders", java.util.List.of());
+            model.addAttribute("reviewedOrderIds", java.util.List.of()); // Thêm list trống khi lỗi
             model.addAttribute("hasOrders", false);
             model.addAttribute("currentPage", 0);
             model.addAttribute("totalPages", 0);
             model.addAttribute("totalElements", 0L);
-            
+
             return "order/order-history";
         }
     }

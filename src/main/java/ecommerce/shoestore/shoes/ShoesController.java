@@ -2,6 +2,8 @@ package ecommerce.shoestore.shoes;
 
 import ecommerce.shoestore.promotion.CustomerPromotionService;
 import ecommerce.shoestore.promotion.PromotionCampaign;
+import ecommerce.shoestore.review.Review;
+import ecommerce.shoestore.review.ReviewRepository;
 import ecommerce.shoestore.shoes.crud.ShoesSearchService;
 import ecommerce.shoestore.shoes.dto.ShoesDetailDto;
 import ecommerce.shoestore.shoes.dto.ShoesListDto;
@@ -27,6 +29,7 @@ public class ShoesController {
     private final ShoesSearchService shoesSearchService;
     private final CategoryRepository categoryRepository;
     private final CustomerPromotionService customerPromotionService;
+    private final ReviewRepository reviewRepository;
 
     @GetMapping("/")
     public String homePage(
@@ -53,6 +56,16 @@ public class ShoesController {
         // Session attributes được tự động thêm bởi SessionModelAdvice
         ShoesDetailDto product = shoesService.getShoesDetail(shoeId);
         model.addAttribute("product", product);
+
+        // Lấy danh sách đánh giá thực tế từ database
+        List<Review> reviews = reviewRepository.findByShoesIdWithDetails(shoeId);
+        model.addAttribute("reviews", reviews);
+
+        double averageRate = reviews.stream()
+                .mapToInt(Review::getRate)
+                .average()
+                .orElse(0.0);
+        model.addAttribute("averageRate", averageRate);
         
         // Lấy các campaign khuyến mãi đang áp dụng cho sản phẩm này
         List<PromotionCampaign> activeCampaigns = customerPromotionService.getActiveCampaignsForProduct(

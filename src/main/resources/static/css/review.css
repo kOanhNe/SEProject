@@ -1,67 +1,51 @@
-/* Container chính */
-.review-container {
-    background-color: #fff;
-}
-
-.section-title {
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Card đánh giá */
+/* style-review.css */
 .review-card {
-    background: #fdfdfd;
-    border: 1px solid #eee;
     border-radius: 12px;
-    padding: 20px;
-    transition: all 0.3s ease;
+    transition: 0.3s;
+    margin-bottom: 20px;
 }
 
-.review-card:hover {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+.product-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
 }
 
-/* Avatar người dùng (tạo hình tròn với chữ cái đầu) */
-.user-avatar {
-    width: 45px;
-    height: 45px;
-    background-color: #333;
-    color: white;
-    border-radius: 50%;
+.star-rating {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.2rem;
-    text-transform: uppercase;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
 }
 
-.user-name {
-    font-weight: 600;
-    font-size: 1.05rem;
-    margin-bottom: 2px;
+.star-rating input {
+    display: none;
 }
 
-.review-stars {
-    font-size: 0.85rem;
+.star-rating label {
+    font-size: 1.8rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+    margin-right: 5px;
 }
 
-.review-date {
-    font-size: 0.85rem;
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: #ffc107;
 }
 
-/* Nội dung bình luận */
-.review-text {
-    color: #444;
-    line-height: 1.6;
-    margin: 0;
-    font-style: italic;
+.star-rating label::before {
+    content: "\F586";
+    font-family: "bootstrap-icons";
 }
 
-/* Khi không có review */
-.no-reviews {
-    background: #f9f9f9;
-    border-radius: 10px;
-    border: 1px dashed #ccc;
+.star-rating input:checked ~ label::before {
+    content: "\F586";
+}
+
+/* Sticky button container */
+.sticky-submit-btn {
+    bottom: 20px;
 }
