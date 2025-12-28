@@ -61,8 +61,8 @@
                 </div>
                 
                 <!-- Khuyến mãi đang áp dụng -->
-                <div class="promo-box" th:if="${activeCampaigns != null and !activeCampaigns.isEmpty()}">
-                    <div class="promo-item" th:each="campaign : ${activeCampaigns}">
+                <div class="promo-box" th:if="${product.activeCampaigns != null and !product.activeCampaigns.isEmpty()}">
+                    <div class="promo-item" th:each="campaign : ${product.activeCampaigns}">
                         <span class="promo-tag" th:if="${campaign.discountType.name() == 'PERCENT'}"
                               th:text="'-' + ${campaign.discountValue} + '%'">-10%</span>
                         <span class="promo-tag fixed" th:if="${campaign.discountType.name() == 'FIXED_AMOUNT'}"
@@ -97,7 +97,7 @@
                 </div>
 
                 <!--Add cart item -->
-                <form th:action="@{/cart/add}" method="post">
+                <form id="buy" th:action="@{/cart/add}" method="post">
 
                     <!-- Lưu trữ toàn bộ variants data trong JavaScript -->
                     <script th:inline="javascript">
@@ -189,45 +189,7 @@
         </div>
     </div>
 
-    <section class="review-container mt-5 py-5 border-top">
-        <div class="container">
-            <h3 class="section-title text-center mb-5">Đánh giá từ khách hàng</h3>
-
-            <div th:if="${reviews == null or reviews.isEmpty()}" class="no-reviews text-center py-4">
-                <i class="fas fa-comment-dots fa-3x mb-3 text-muted"></i>
-                <p class="text-muted">Sản phẩm này chưa có đánh giá nào. Hãy là người đầu tiên mua và để lại cảm nhận!</p>
-            </div>
-
-            <div th:if="${reviews != null and !reviews.isEmpty()}" class="review-list">
-                <div th:each="review : ${reviews}" class="review-card mb-4">
-                    <div class="review-header d-flex justify-content-between align-items-center">
-                        <div class="user-info d-flex align-items-center">
-                            <div class="user-avatar me-3">
-                                <span th:text="${#strings.substring(review.user.fullName, 0, 1)}">U</span>
-                            </div>
-                            <div>
-                                <div class="user-name" th:text="${review.user.fullName}">Tên người dùng</div>
-                                <div class="review-stars">
-                                <span th:each="i : ${#numbers.sequence(1, 5)}">
-                                    <i class="fa-star"
-                                       th:classappend="${i <= review.rate} ? 'fas text-warning' : 'far text-secondary'"></i>
-                                </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="review-date text-muted"
-                             th:text="${#temporals.format(review.reviewDate, 'dd/MM/yyyy')}">
-                            25/12/2025
-                        </div>
-                    </div>
-                    <div class="review-body mt-3">
-                        <p class="review-text" th:text="${review.comment}">Nội dung đánh giá ở đây...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
+    <!-- RELATED PRODUCTS SECTION -->
     <div class="related-section" th:if="${product.relatedProducts != null and !product.relatedProducts.isEmpty()}">
         <h3 class="section-title text-center mb-5">Sản phẩm tương tự</h3>
         <div class="product-grid">
@@ -262,11 +224,23 @@
 
 <div th:replace="~{fragments :: footer}"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Product Detail Scripts -->
 <script>
     // Lưu trữ màu đã chọn
     let selectedColor = null;
     let selectedVariantId = null;
+    
+    // Scroll đến phần mua hàng nếu có hash #buy
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash === '#buy') {
+            const buySection = document.getElementById('buy');
+            if (buySection) {
+                setTimeout(() => {
+                    buySection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        }
+    });
 
     function changeImage(thumb) {
         const mainImg = document.getElementById('mainImage');
@@ -281,8 +255,6 @@
 
     /**
      * Xử lý khi người dùng chọn màu
-     * - Lọc các variant theo màu đã chọn
-     * - Hiển thị các size tương ứng (không trùng lặp)
      */
     function onColorSelected(color) {
         selectedColor = color;
@@ -292,21 +264,17 @@
         const sizeSelector = document.getElementById('sizeSelector');
         const selectColorFirst = document.getElementById('selectColorFirst');
         
-        // Ẩn thông báo "chọn màu trước"
         if (selectColorFirst) {
             selectColorFirst.style.display = 'none';
         }
         
-        // Lọc variants theo màu đã chọn
         const filteredVariants = productVariants.filter(v => v.color === color);
         
-        // Xóa các size options cũ (giữ lại thông báo selectColorFirst)
         const existingLabels = sizeSelector.querySelectorAll('label.selector-item');
         existingLabels.forEach(label => label.remove());
         
-        // Tạo danh sách size unique và sắp xếp
         const uniqueSizes = [];
-        const sizeVariantMap = {}; // Map size -> variantId và stock
+        const sizeVariantMap = {};
         
         filteredVariants.forEach(v => {
             if (!sizeVariantMap[v.size]) {
@@ -318,10 +286,8 @@
             }
         });
         
-        // Sắp xếp theo số
         uniqueSizes.sort((a, b) => parseInt(a) - parseInt(b));
         
-        // Render các size options
         uniqueSizes.forEach(size => {
             const variant = sizeVariantMap[size];
             const isOutOfStock = !variant.stock || variant.stock <= 0;
@@ -360,7 +326,6 @@
             sizeSelector.appendChild(label);
         });
         
-        // Cập nhật thông tin stock nếu cần
         updateStockDisplay(null);
     }
     
@@ -370,13 +335,11 @@
     function onSizeSelected(variantId, stock) {
         selectedVariantId = variantId;
         document.getElementById('selectedVariantId').value = variantId;
-        
-        // Cập nhật hiển thị stock
         updateStockDisplay(stock);
     }
     
     /**
-     * Cập nhật hiển thị tồn kho theo variant đã chọn
+     * Cập nhật hiển thị tồn kho
      */
     function updateStockDisplay(stock) {
         const stockInfo = document.querySelector('.stock-info');
@@ -410,36 +373,29 @@
 
     /**
      * Chức năng Mua Ngay
-     * - Kiểm tra người dùng đã chọn màu và size chưa
-     * - Kiểm tra số lượng hợp lệ
-     * - Chuyển hướng đến trang checkout với thông tin đã chọn
      */
     function buyNow() {
-        // 1. Kiểm tra đã chọn màu chưa
         if (!selectedColor) {
             alert('Vui lòng chọn màu sắc!');
             return;
         }
         
-        // 2. Kiểm tra đã chọn size chưa
         const variantId = document.getElementById('selectedVariantId').value;
         if (!variantId) {
             alert('Vui lòng chọn kích thước!');
             return;
         }
 
-        // 3. Lấy thông tin số lượng
         const quantity = document.getElementById('quantity').value;
         if (!quantity || parseInt(quantity) <= 0) {
             alert('Số lượng phải lớn hơn 0!');
             return;
         }
 
-        // 4. Chuyển hướng đến trang checkout với type=BUY_NOW
         window.location.href = `/order/checkout?type=BUY_NOW&variantId=${variantId}&quantity=${quantity}`;
     }
     
-    // Validate form trước khi submit (Thêm vào giỏ)
+    // Validate form trước khi submit
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form[action*="/cart/add"]');
         if (form) {
@@ -462,7 +418,6 @@
             });
         }
     });
-    
 </script>
 </body>
 </html>
