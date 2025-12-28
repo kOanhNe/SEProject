@@ -8,13 +8,9 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    List<Review> findByShoes_ShoeId(Long shoeId);
-
     boolean existsByOrderItem_OrderItemId(Long orderItemId);
 
     boolean existsByOrderItem_OrderId(Long orderId);
-
-    List<Review> findByShoes_ShoeIdOrderByReviewDateDesc(Long shoeId);
     @Query("SELECT r FROM Review r " +
             "JOIN FETCH r.user " +
             "LEFT JOIN FETCH r.orderItem " +

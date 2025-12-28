@@ -3,9 +3,9 @@ package ecommerce.shoestore.review;
 import ecommerce.shoestore.auth.user.UserRepository;
 import ecommerce.shoestore.review.dto.ReviewRequest;
 import ecommerce.shoestore.shoes.Shoes;
-import ecommerce.shoestore.shoes.ShoesRepository; // Giả định bạn đã có
+import ecommerce.shoestore.shoes.ShoesRepository;
 import ecommerce.shoestore.order.OrderItem;
-import ecommerce.shoestore.order.OrderItemRepository; // Giả định bạn đã có
+import ecommerce.shoestore.order.OrderItemRepository;
 import ecommerce.shoestore.auth.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

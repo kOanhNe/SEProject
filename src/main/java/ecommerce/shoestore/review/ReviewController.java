@@ -27,7 +27,7 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final OrderService orderService;
     private final ShoesRepository shoesRepository;
-    private final ReviewRepository reviewRepository; // Thêm repository vào đây
+    private final ReviewRepository reviewRepository;
 
     @GetMapping("/{orderId}")
     @Transactional(readOnly = true)
