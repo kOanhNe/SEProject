@@ -84,7 +84,8 @@
                                         <label>Trạng thái hiện tại:</label>
                                         <span class="badge rounded-pill" 
                                               th:classappend="'bg-' + ${order.statusColorClass}"
-                                              th:text="${order.statusDisplay}">
+                                              th:text="${order.statusDisplay}"
+                                              style="color: white !important; font-weight: bold;">
                                             Đang xử lý
                                         </span>
                                     </div>

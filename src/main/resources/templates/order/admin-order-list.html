@@ -223,18 +223,88 @@
                     </table>
                 </div>
 
-                <!-- Phân trang -->
-                <nav th:if="${totalPages > 1}" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage - 1}, status=${currentStatus})}">Trước</a>
-                        </li>
-                        <li class="page-item active"><span class="page-link" th:text="${currentPage + 1}">1</span></li>
-                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage + 1}, status=${currentStatus})}">Sau</a>
-                        </li>
-                    </ul>
-                </nav>
+                <!-- Phân trang cải tiến -->
+                <div th:if="${totalPages > 1}" class="mt-4">
+                    <!-- Jump to page -->
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <label class="me-2 text-muted">Nhảy tới trang:</label>
+                                <div class="input-group" style="width: 120px;">
+                                    <input type="number" class="form-control form-control-sm" 
+                                           id="pageJump" min="1" th:max="${totalPages}" 
+                                           placeholder="Trang">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="jumpToPage()">Go</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">Trang <span th:text="${currentPage + 1}">1</span> / <span th:text="${totalPages}">5</span></small>
+                        </div>
+                    </div>
+                    
+                    <!-- Pagination buttons -->
+                    <nav>
+                        <ul class="pagination justify-content-center pagination-lg">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/order/admin/all(page=${currentPage - 1})}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">Trước</a>
+                            </li>
+                            
+                            <!-- Show first page -->
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'active'">
+                                <a class="page-link" th:href="@{/order/admin/all(page=0)}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">1</a>
+                            </li>
+                            
+                            <!-- Show dots if needed -->
+                            <li th:if="${currentPage > 2}" class="page-item disabled">
+                                <span class="page-link" style="font-size: 1.1rem; padding: 0.75rem 1rem;">...</span>
+                            </li>
+                            
+                            <!-- Show current page area -->
+                            <li th:if="${currentPage > 0 && currentPage < totalPages - 1}" 
+                                class="page-item active">
+                                <span class="page-link" th:text="${currentPage + 1}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">2</span>
+                            </li>
+                            
+                            <!-- Show dots if needed -->
+                            <li th:if="${currentPage < totalPages - 3}" class="page-item disabled">
+                                <span class="page-link" style="font-size: 1.1rem; padding: 0.75rem 1rem;">...</span>
+                            </li>
+                            
+                            <!-- Show last page -->
+                            <li th:if="${totalPages > 1}" class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'active'">
+                                <a class="page-link" th:href="@{/order/admin/all(page=${totalPages - 1})}" 
+                                   th:text="${totalPages}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">5</a>
+                            </li>
+                            
+                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                <a class="page-link" th:href="@{/order/admin/all(page=${currentPage + 1})}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">Sau</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                
+                <script>
+                function jumpToPage() {
+                    const pageInput = document.getElementById('pageJump');
+                    const pageNumber = parseInt(pageInput.value);
+                    const totalPages = /*[[${totalPages}]]*/;
+                    
+                    if (pageNumber && pageNumber >= 1 && pageNumber <= totalPages) {
+                        window.location.href = '/order/admin/all?page=' + (pageNumber - 1);
+                    } else {
+                        alert('Vui lòng nhập số trang hợp lệ (1-' + totalPages + ')');
+                        pageInput.focus();
+                    }
+                }
+                
+                // Allow Enter key to jump
+                document.getElementById('pageJump').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        jumpToPage();
+                    }
+                });
+                </script>
 
             </div>
         </main>
