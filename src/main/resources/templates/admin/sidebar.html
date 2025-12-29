@@ -62,7 +62,7 @@
                 <span class="menu-label">Quản lý khuyến mãi</span>
             </a>
 
-            <a th:href="@{/order/admin/all}"
+            <a th:href="@{/admin/orders}"
                class="menu-item"
                th:classappend="${activeMenu == 'orders'} ? 'active' : ''">
                 <span class="menu-icon">
@@ -77,7 +77,9 @@
 
             <hr/>
 
-            <a href="#" class="menu-item disabled">
+            <a th:href="@{/admin/revenue}" 
+               class="menu-item"
+               th:classappend="${activeMenu == 'revenue'} ? 'active' : ''">
                 <span class="menu-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="20" x2="18" y2="10"></line>

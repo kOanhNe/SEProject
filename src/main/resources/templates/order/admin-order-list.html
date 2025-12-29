@@ -66,19 +66,19 @@
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card bg-gradient-warning">
-                        <div><p>Chờ xử lý</p><h3>--</h3></div>
+                        <div><p>Chờ xác nhận</p><h3 th:text="${pendingCount}">0</h3></div>
                         <i class="bi bi-hourglass-split stat-icon"></i>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card bg-gradient-success">
-                        <div><p>Hoàn thành</p><h3>--</h3></div>
+                        <div><p>Hoàn thành</p><h3 th:text="${completedCount}">0</h3></div>
                         <i class="bi bi-check-circle stat-icon"></i>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card bg-gradient-danger">
-                        <div><p>Đã hủy</p><h3>--</h3></div>
+                        <div><p>Đã hủy</p><h3 th:text="${cancelledCount}">0</h3></div>
                         <i class="bi bi-x-circle stat-icon"></i>
                     </div>
                 </div>
@@ -95,12 +95,19 @@
                         <div class="dropdown">
                             <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-funnel"></i> 
-                                <span th:text="${currentStatus == 'ALL' ? 'Tất cả trạng thái' : currentStatus}">Lọc</span>
+                                <span th:if="${currentStatus == 'ALL'}">Tất cả trạng thái</span>
+                                <span th:if="${currentStatus == 'PENDING'}">Chờ xác nhận</span>
+                                <span th:if="${currentStatus == 'CONFIRMED'}">Đã xác nhận</span>
+                                <span th:if="${currentStatus == 'SHIPPING'}">Đang giao</span>
+                                <span th:if="${currentStatus == 'COMPLETED'}">Hoàn thành</span>
+                                <span th:if="${currentStatus == 'CANCELLED'}">Đã hủy</span>
+                                <span th:if="${currentStatus != 'ALL' && currentStatus != 'PENDING' && currentStatus != 'CONFIRMED' && currentStatus != 'SHIPPING' && currentStatus != 'COMPLETED' && currentStatus != 'CANCELLED'}">Lọc</span>
                             </button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" th:href="@{/admin/orders(status='ALL')}">Tất cả</a></li>
                                 <li><a class="dropdown-item" th:href="@{/admin/orders(status='PENDING')}">🟡 Chờ xác nhận</a></li>
-                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='SHIPPING')}">🔵 Đang giao</a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='CONFIRMED')}">🔵 Đã xác nhận</a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='SHIPPING')}">🚚 Đang giao</a></li>
                                 <li><a class="dropdown-item" th:href="@{/admin/orders(status='COMPLETED')}">🟢 Hoàn thành</a></li>
                                 <li><a class="dropdown-item" th:href="@{/admin/orders(status='CANCELLED')}">🔴 Đã hủy</a></li>
                             </ul>
@@ -152,8 +159,10 @@
                                 
                                 <td class="text-center">
                                     <!-- Badge màu sắc (Đã sửa bg- để khớp logic Service) -->
+                                    <small th:text="'[' + ${order.statusColorClass} + ']'"></small><br/>
                                     <span class="badge rounded-pill" 
                                           th:classappend="'bg-' + ${order.statusColorClass}"
+                                          th:style="'color: ' + (${order.statusColorClass == 'warning' || order.statusColorClass == 'info'} ? '#000' : '#fff') + ' !important; background-color: ' + (${order.statusColorClass == 'warning'} ? '#ffc107' : (${order.statusColorClass == 'info'} ? '#17a2b8' : '')) + ' !important;'"
                                           th:text="${order.statusDisplay}">
                                         Trạng thái
                                     </span>
@@ -165,8 +174,8 @@
 
                                 <td class="text-end">
                                     <div class="btn-group">
-                                        <!-- Nút Xem chi tiết (Chưa có link) -->
-                                        <a href="#" class="btn btn-sm btn-light border" title="Xem chi tiết">
+                                        <!-- Nút Xem chi tiết -->
+                                        <a th:href="@{/order/tracking/{orderId}(orderId=${order.orderId})}" class="btn btn-sm btn-light border" title="Xem chi tiết">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         
@@ -223,18 +232,93 @@
                     </table>
                 </div>
 
-                <!-- Phân trang -->
-                <nav th:if="${totalPages > 1}" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage - 1}, status=${currentStatus})}">Trước</a>
-                        </li>
-                        <li class="page-item active"><span class="page-link" th:text="${currentPage + 1}">1</span></li>
-                        <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                            <a class="page-link" th:href="@{/admin/orders(page=${currentPage + 1}, status=${currentStatus})}">Sau</a>
-                        </li>
-                    </ul>
-                </nav>
+                <!-- Phân trang cải tiến -->
+                <div th:if="${totalPages > 1}" class="mt-4">
+                    <!-- Jump to page -->
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <label class="me-2 text-muted">Nhảy tới trang:</label>
+                                <div class="input-group" style="width: 120px;">
+                                    <input type="number" class="form-control form-control-sm" 
+                                           id="pageJump" min="1" th:max="${totalPages}" 
+                                           placeholder="Trang">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="jumpToPage()">Go</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">Trang <span th:text="${currentPage + 1}">1</span> / <span th:text="${totalPages}">5</span></small>
+                        </div>
+                    </div>
+                    
+                    <!-- Pagination buttons -->
+                    <nav>
+                        <ul class="pagination justify-content-center pagination-lg">
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${currentPage - 1}, status=${currentStatus})}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">Trước</a>
+                            </li>
+                            
+                            <!-- Show first page -->
+                            <li class="page-item" th:classappend="${currentPage == 0} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/orders(page=0, status=${currentStatus})}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">1</a>
+                            </li>
+                            
+                            <!-- Show dots if needed -->
+                            <li th:if="${currentPage > 2}" class="page-item disabled">
+                                <span class="page-link" style="font-size: 1.1rem; padding: 0.75rem 1rem;">...</span>
+                            </li>
+                            
+                            <!-- Show current page area -->
+                            <li th:if="${currentPage > 0 && currentPage < totalPages - 1}" 
+                                class="page-item active">
+                                <span class="page-link" th:text="${currentPage + 1}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">2</span>
+                            </li>
+                            
+                            <!-- Show dots if needed -->
+                            <li th:if="${currentPage < totalPages - 3}" class="page-item disabled">
+                                <span class="page-link" style="font-size: 1.1rem; padding: 0.75rem 1rem;">...</span>
+                            </li>
+                            
+                            <!-- Show last page -->
+                            <li th:if="${totalPages > 1}" class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${totalPages - 1}, status=${currentStatus})}" 
+                                   th:text="${totalPages}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">5</a>
+                            </li>
+                            
+                            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${currentPage + 1}, status=${currentStatus})}" style="font-size: 1.1rem; padding: 0.75rem 1rem;">Sau</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                
+                <script>
+                function jumpToPage() {
+                    const pageInput = document.getElementById('pageJump');
+                    const pageNumber = parseInt(pageInput.value);
+                    const totalPages = /*[[${totalPages}]]*/;
+                    
+                    if (pageNumber && pageNumber >= 1 && pageNumber <= totalPages) {
+                        const status = '[[${currentStatus}]]';
+                        let url = '/admin/orders?page=' + (pageNumber - 1);
+                        if (status && status !== 'ALL') {
+                            url += '&status=' + status;
+                        }
+                        window.location.href = url;
+                    } else {
+                        alert('Vui lòng nhập số trang hợp lệ (1-' + totalPages + ')');
+                        pageInput.focus();
+                    }
+                }
+                
+                // Allow Enter key to jump
+                document.getElementById('pageJump').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        jumpToPage();
+                    }
+                });
+                </script>
 
             </div>
         </main>

@@ -23,9 +23,21 @@ public interface OrderHistoryRepository extends JpaRepository<Order, Long> {
     // Tìm đơn hàng trong khoảng thời gian
     List<Order> findByCreateAtBetweenOrderByCreateAtDesc(java.time.LocalDateTime startDate, 
                                                         java.time.LocalDateTime endDate);
+    
+    // Tìm đơn hàng theo trạng thái và thời gian cho revenue report
+    @Query(value = "SELECT * FROM \"order\" WHERE status = CAST(:status AS order_status) AND \"createAt\" BETWEEN :startDate AND :endDate ORDER BY \"createAt\" DESC", 
+           nativeQuery = true)
+    List<Order> findByStatusAndCreateAtBetween(@Param("status") String status, 
+                                              @Param("startDate") java.time.LocalDateTime startDate,
+                                              @Param("endDate") java.time.LocalDateTime endDate);
     // Tìm theo trạng thái và phân trang
     @Query(value = "SELECT * FROM \"order\" WHERE status = CAST(:#{#status.name()} AS order_status)", 
            countQuery = "SELECT count(*) FROM \"order\" WHERE status = CAST(:#{#status.name()} AS order_status)",
            nativeQuery = true)
     Page<Order> findByStatus(@Param("status") OrderStatus status, Pageable pageable);
+    
+    // Đếm số đơn hàng theo trạng thái
+    @Query(value = "SELECT count(*) FROM \"order\" WHERE status = CAST(:#{#status.name()} AS order_status)", 
+           nativeQuery = true)
+    long countByStatus(@Param("status") OrderStatus status);
 }
