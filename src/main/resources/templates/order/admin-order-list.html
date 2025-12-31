@@ -27,7 +27,6 @@
         .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
         .bg-gradient-warning { background: linear-gradient(45deg, #f6c23e, #dda20a); }
         .bg-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be2617); }
-
         .table-avatar { width: 40px; height: 40px; background: #eef2f7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #555; margin-right: 10px; }
     </style>
 </head>
@@ -121,15 +120,17 @@
                                 <span th:if="${currentStatus == 'SHIPPING'}">Đang giao</span>
                                 <span th:if="${currentStatus == 'COMPLETED'}">Hoàn thành</span>
                                 <span th:if="${currentStatus == 'CANCELLED'}">Đã hủy</span>
+                                <span th:if="${currentStatus == 'REQUEST_CANCELLED'}">Yêu cầu huỷ</span>
                                 <span th:if="${currentStatus != 'ALL' && currentStatus != 'PENDING' && currentStatus != 'CONFIRMED' && currentStatus != 'SHIPPING' && currentStatus != 'COMPLETED' && currentStatus != 'CANCELLED'}">Lọc</span>
                             </button>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" th:href="@{/admin/orders(status='ALL')}">Tất cả</a></li>
                                 <li><a class="dropdown-item" th:href="@{/admin/orders(status='PENDING')}">🟡 Chờ xác nhận</a></li>
                                 <li><a class="dropdown-item" th:href="@{/admin/orders(status='CONFIRMED')}">🔵 Đã xác nhận</a></li>
-                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='SHIPPING')}">🚚 Đang giao</a></li>
-                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='COMPLETED')}">🟢 Hoàn thành</a></li>
-                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='CANCELLED')}">🔴 Đã hủy</a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='SHIPPING')}">🚚 Đang giao </a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='COMPLETED')}">🟢 Hoàn thành </a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='CANCELLED')}">🔴 Đã hủy </a></li>
+                                <li><a class="dropdown-item" th:href="@{/admin/orders(status='REQUEST_CANCELLED')}">🔴 Yêu cầu huỷ </a></li>
                             </ul>
                         </div>
                     </div>

@@ -43,6 +43,7 @@ public class OrderHistoryService {
             case "SHIPPING": return "Đang giao hàng";
             case "COMPLETED": return "Hoàn thành";
             case "CANCELLED": return "Đã hủy";
+            case "REQUEST_CANCELLED": return "Yêu cầu huỷ";
             default: return statusStr;
         }
     }
@@ -58,6 +59,7 @@ public class OrderHistoryService {
             case "COMPLETED": return "success";
             case "DELIVERED": return "success";
             case "CANCELLED": return "danger";
+            case "REQUEST_CANCELLED": return "danger";
             default: return "secondary";
         }
     }

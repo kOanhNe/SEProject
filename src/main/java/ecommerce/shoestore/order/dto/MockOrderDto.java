@@ -37,6 +37,7 @@ public class MockOrderDto {
             case "SHIPPING": return "Đang giao hàng";
             case "COMPLETED": return "Giao hàng thành công";
             case "CANCELLED": return "Đã hủy";
+            case "REQUEST_CANCELLED": return "Yêu cầu huỷ";
             default: return status;
         }
     }
@@ -50,6 +51,7 @@ public class MockOrderDto {
             case "SHIPPING": return "Đang giao hàng";
             case "COMPLETED": return "Giao hàng thành công";
             case "CANCELLED": return "Đã hủy";
+            case "REQUEST_CANCELLED": return "Yêu cầu huỷ";
             default: return status;
         }
     }

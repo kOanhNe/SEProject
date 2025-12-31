@@ -15,6 +15,7 @@
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
 </div>
+
 <div class="admin-layout">
 
     <aside class="sidebar">
@@ -27,19 +28,18 @@
         <header class="topbar">
             <div class="topbar-inner">
                 <div class="topbar-left">
-                    <button class = "menu-toggle" aria-label = "Toggle menu">☰</button>
+                    <button class="menu-toggle" aria-label="Toggle menu">☰</button>
                     <h3>Quản lý tồn kho</h3>
                 </div>
                 
                 <!-- PHẦN THÔNG BÁO (CHUÔNG) -->
                 <div class="topbar-right">
-
                     <div th:replace="~{admin/inventory/inventory-notification :: notification-bell}"></div>
+                    <div class="user" style="margin-left: 15px; font-weight: 600;">Admin</div>
                 </div>
             </div>
         </header>
 
-        <!-- Nội dung bảng (Copy từ code cũ vào đây) -->
         <main class="page-content">
             <div class="inventory-container">
                 
@@ -60,16 +60,18 @@
                     </form>
 
                     <div class="inventory-action-buttons">
+                        <!-- Nút điều hướng về trang sản phẩm -->
                         <a th:href="@{/admin/products}" class="inventory-btn-import">
-                            <span style = "margin-right: 5px; display: flex; align-items: center;">
-                                <svg xmlns = "http://www.w3.org/2000/svg" width="20" height = "20"
-                                fill = "currentColor" class = "bi bi-arrow-right-circle" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 
-                                8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 
-                                0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
+                            <span style="margin-right: 5px; display: flex; align-items: center;">
+                                <!-- Đã sửa lỗi chính tả xmlns -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                     fill="currentColor" class="bi bi-arrow-right-circle" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 
+                                    8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 
+                                    0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
                                 </svg>
                             </span>
-                            Nhập hàng mới
+                            Quản lý sản phẩm
                         </a>
                     </div>
                 </div>
@@ -77,9 +79,10 @@
                 <!-- Bảng dữ liệu -->
                 <div class="inventory-table-wrapper">
                     <table class="inventory-table">
-                        <thead>
+                        <thead> 
                             <tr>
-                                <th>ID</th>
+                                <!-- Đổi tiêu đề ID thành STT cho đẹp -->
+                                <th class="inventory-text-center" style="width: 60px">STT</th>
                                 <th>Sản phẩm</th>
                                 <th class="inventory-text-center">Số lượng</th>
                                 <th class="inventory-text-center">Trạng thái</th>
@@ -87,23 +90,38 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="item : ${inventories}">
-                                <td th:text="'#' + ${item.shoeId}" class="inventory-id-col"></td>
+                            <!-- Thêm biến stat để đếm số thứ tự -->
+                            <tr th:each="item, stat : ${inventories}">
+                                
+                                <!-- Tính toán STT: (Trang hiện tại * 10) + Số đếm -->
+                                <td class="inventory-id-col text-center" 
+                                    th:text="${(currentPage * 10) + stat.count}">1</td>
+                                
                                 <td>
                                     <div class="inventory-product-info">
                                         <div class="inventory-product-icon">👟</div>
                                         <div>
-                                            <div th:text="${item.shoeName}" class="inventory-product-name"></div>
-                                            <div class="inventory-product-sku"></div>
+                                            <div th:text="${item.shoeName}" class="inventory-product-name">Tên giày</div>
+                                            <!-- Hiển thị mã ID thực tế ở đây cho nhỏ gọn -->
+                                            <div class="inventory-product-sku" style="font-size: 11px; color: #888;">
+                                                Mã hệ thống: #<span th:text="${item.shoeId}"></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
+                                
                                 <td th:text="${item.quantity}" class="inventory-text-center qty-text"></td>
+                                
                                 <td class="inventory-text-center">
                                     <span th:if="${item.status.name() == 'IN_STOCK'}" class="inventory-status-badge instock">● Còn hàng</span>
+                                    
+                                    <!-- Sửa class outstock -->
                                     <span th:if="${item.status.name() == 'OUT_OF_STOCK'}" class="inventory-status-badge outstock">● Hết hàng</span>
-                                    <span th:if="${item.status.name() == 'ALMOST_OUT_OF_STOCK'}" class="inventory-status-badge almost_outstock">● Sắp hết</span>
+                                    
+                                    <!-- Đã sửa tên class từ almost_outstock thành almost-out để khớp CSS -->
+                                    <span th:if="${item.status.name() == 'ALMOST_OUT_OF_STOCK'}" class="inventory-status-badge almost-out">● Sắp hết</span>
                                 </td>
+                                
                                 <td class="inventory-text-end">
                                     <a th:href="@{/admin/inventory/detail/{id}(id=${item.inventoryId})}" class="btn-detail">Chi tiết</a>
                                 </td>
@@ -112,7 +130,7 @@
                     </table>
                 </div>
                 
-                <!-- Footer -->
+                <!-- Footer & Phân trang -->
                 <div class="inventory-footer d-flex justify-content-between align-items-center mt-3">
     
                     <div class="footer-info text-muted small">
@@ -123,7 +141,6 @@
                     <!-- Thanh Phân Trang -->
                     <nav th:if="${totalPages > 1}">
                         <ul class="pagination pagination-sm mb-0">
-                            <!-- Nút Trước -->
                             <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                                 <a class="page-link" 
                                 th:href="@{/admin/inventory(keyword=${currentKeyword}, status=${currentStatus}, page=${currentPage - 1})}">
@@ -131,13 +148,10 @@
                                 </a>
                             </li>
 
-                            <!-- Các trang số -->
-                            <!-- Hiển thị đơn giản: Trang đầu, Trang cuối và trang hiện tại -->
                             <li class="page-item disabled">
                                 <span class="page-link" th:text="${currentPage + 1}">1</span>
                             </li>
 
-                            <!-- Nút Sau -->
                             <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
                                 <a class="page-link" 
                                 th:href="@{/admin/inventory(keyword=${currentKeyword}, status=${currentStatus}, page=${currentPage + 1})}">

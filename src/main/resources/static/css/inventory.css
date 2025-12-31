@@ -173,6 +173,10 @@
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
+    display: inline-block;
+    white-space: nowrap;
+    min-width: 100px;
+    text-align: center;
 }
 
 .inventory-status-badge.instock {

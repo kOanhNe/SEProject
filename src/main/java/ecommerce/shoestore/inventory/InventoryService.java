@@ -15,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
@@ -29,15 +31,19 @@ public class InventoryService {
         String keywordStr = (StringUtils.isNotBlank(keyword)) ? keyword : null;
         Page<Inventory> inventoryPage;
         if (keywordStr == null && statusStr == null) {
-            inventoryPage = inventoryRepository.findAll(pageable); 
+            inventoryPage = inventoryRepository.findAll(pageable);
         } else {
             inventoryPage = inventoryRepository.searchInventory(keywordStr, statusStr, pageable);
         }
+        Set<Long> shoeIds = inventoryPage.getContent().stream()
+                .map(Inventory::getShoeId)
+                .collect(Collectors.toSet());
+        Map<Long, String> shoeNamesMap = shoesRepository.findAllById(shoeIds).stream()
+                .collect(Collectors.toMap(Shoes::getShoeId, Shoes::getName));
         return inventoryPage.map(inv -> {
-            String shoeName = shoesRepository.findById(inv.getShoeId())
-                    .map(s -> s.getName())
-                    .orElse("Sản phẩm không tồn tại");
-                    
+            // Lấy tên từ Map (Siêu nhanh vì nằm trong RAM)
+            String shoeName = shoeNamesMap.getOrDefault(inv.getShoeId(), "Sản phẩm không tồn tại");
+
             return InventoryResponseDto.builder()
                     .inventoryId(inv.getInventoryId())
                     .shoeId(inv.getShoeId())
@@ -72,7 +78,7 @@ public class InventoryService {
 
     /*Thông báo */
     public List<InventoryResponseDto> getAlertInventory() {
-        Page<InventoryResponseDto> page = getAllInventory(null, null, 0, 10000);
+        Page<InventoryResponseDto> page = getAllInventory(null, null, 0, 1000);
         return page.getContent().stream()
                 .filter(item -> item.getStatus() != InventoryStatus.IN_STOCK)
                 .collect(Collectors.toList());
