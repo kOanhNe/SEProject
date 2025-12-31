@@ -31,7 +31,7 @@ public class PaymentController {
      * Tạo payment và redirect đến VNPay
      * GET/POST /payment/create-vnpay
      */
-    @GetMapping("/create-vnpay")
+    @RequestMapping(value = "/create-vnpay", method = {RequestMethod.GET, RequestMethod.POST})
     @Transactional
     public String createVNPayPayment(
             @RequestParam Long orderId,
@@ -54,22 +54,45 @@ public class PaymentController {
                 throw new RuntimeException("Đơn hàng không hợp lệ");
             }
             
-            // Tạo payment record trong bảng payment
-            Payment payment = new Payment();
-            payment.setOrderId(orderId);
-            payment.setProvider("VNPAY");
-            payment.setAmount(order.getTotalAmount());
+            // Check if payment already exists (for retry)
+            Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+            if (payment == null) {
+                // Tạo mới payment record
+                payment = new Payment();
+                payment.setOrderId(orderId);
+                payment.setProvider("VNPAY");
+                payment.setAmount(order.getTotalAmount());
+                payment.setCurrency("VND");
+            }
+            // Reset status for retry
             payment.setStatus("PENDING");
+            payment.setPaidAt(null);
+            payment.setTransactionCode(null);
             payment = paymentRepository.save(payment);
             
-            // Tạo payment transaction record
-            PaymentTransaction transaction = new PaymentTransaction();
-            transaction.setOrderId(orderId);
-            transaction.setVnpTxnRef(String.valueOf(orderId));
-            transaction.setAmount(order.getTotalAmount());
-            transaction.setPaymentMethod("VNPAY");
+            // Check if transaction already exists (for retry)
+            PaymentTransaction transaction = paymentTransactionRepository.findByOrderId(orderId).orElse(null);
+            if (transaction == null) {
+                // Tạo mới payment transaction record
+                transaction = new PaymentTransaction();
+                transaction.setOrderId(orderId);
+                transaction.setVnpTxnRef(String.valueOf(orderId));
+                transaction.setAmount(order.getTotalAmount());
+                transaction.setPaymentMethod("VNPAY");
+            }
+            // Reset status for retry
             transaction.setStatus("PENDING");
+            transaction.setTransactionId(null);
+            transaction.setResponseCode(null);
+            transaction.setBankCode(null);
+            transaction.setCardType(null);
             transaction = paymentTransactionRepository.save(transaction);
+            
+            // Reset order payment status
+            order.setPaymentStatus("UNPAID");
+            order.setPaidAt(null);
+            order.setTransactionId(null);
+            orderRepository.save(order);
             
             // Tạo payment URL
             String ipAddress = vnPayService.getIpAddress(request);
@@ -81,8 +104,9 @@ public class PaymentController {
             return "redirect:" + paymentUrl;
             
         } catch (Exception e) {
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "Không thể tạo thanh toán: " + e.getMessage());
-            return "redirect:/order/payment";
+            return "redirect:/";
         }
     }
     
@@ -185,12 +209,18 @@ public class PaymentController {
                 paymentRepository.save(payment);
                 orderRepository.save(order);
                 
-                System.out.println("Payment FAILED for order: " + orderId);
+                System.out.println("Payment FAILED for order: " + orderId + ", Response Code: " + vnpResponseCode);
                 
                 String errorMessage = vnPayService.getResponseMessage(vnpResponseCode);
                 
+                // Use flash attributes instead of query params to avoid encoding issues
+                redirectAttributes.addFlashAttribute("orderId", orderId);
+                redirectAttributes.addFlashAttribute("errorMessage", errorMessage);
+                redirectAttributes.addFlashAttribute("order", order);
+                redirectAttributes.addFlashAttribute("payment", payment);
+                
                 // Redirect đến trang failed
-                return "redirect:/payment/failed?orderId=" + orderId + "&message=" + errorMessage;
+                return "redirect:/payment/failed";
             }
             
         } catch (Exception e) {
@@ -240,7 +270,7 @@ public class PaymentController {
      */
     @GetMapping("/failed")
     public String paymentFailed(
-            @RequestParam Long orderId,
+            @RequestParam(required = false) Long orderId,
             @RequestParam(required = false) String message,
             Model model,
             HttpSession session) {
@@ -251,10 +281,33 @@ public class PaymentController {
         }
         
         try {
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+            // Try to get from flash attributes first
+            if (model.containsAttribute("orderId")) {
+                orderId = (Long) model.asMap().get("orderId");
+            }
             
-            Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+            if (model.containsAttribute("errorMessage")) {
+                message = (String) model.asMap().get("errorMessage");
+            }
+            
+            Order order = null;
+            Payment payment = null;
+            
+            // Try to get from flash attributes
+            if (model.containsAttribute("order")) {
+                order = (Order) model.asMap().get("order");
+            }
+            if (model.containsAttribute("payment")) {
+                payment = (Payment) model.asMap().get("payment");
+            }
+            
+            // If not in flash attributes, fetch from database
+            if (order == null && orderId != null) {
+                order = orderRepository.findById(orderId).orElse(null);
+            }
+            if (payment == null && orderId != null) {
+                payment = paymentRepository.findByOrderId(orderId).orElse(null);
+            }
             
             model.addAttribute("order", order);
             model.addAttribute("payment", payment);
@@ -263,8 +316,11 @@ public class PaymentController {
             return "payment-failed";
             
         } catch (Exception e) {
+            System.err.println("Error in payment failed page: " + e.getMessage());
+            e.printStackTrace();
             model.addAttribute("error", e.getMessage());
-            return "error";
+            model.addAttribute("errorMessage", "Có lỗi xảy ra khi xử lý thanh toán");
+            return "payment-failed";
         }
     }
     
