@@ -57,23 +57,6 @@ public class CartService {
         }
     }
 
-    // ================== REMOVE ITEM ==================
-    @Transactional
-    public void removeItem(User user, Long cartItemId) {
-
-        Cart cart = cartRepository.findByCustomer(user)
-                .orElseThrow(() -> new RuntimeException("Cart không tồn tại"));
-
-        CartItem item = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Item không tồn tại"));
-
-        if (!item.getCart().equals(cart)) {
-            throw new RuntimeException("Item không thuộc cart này");
-        }
-
-        cartItemRepository.delete(item);
-    }
-
     // ================== INCREASE ==================
     @Transactional
     public void increaseQuantity(User user, Long cartItemId) {
